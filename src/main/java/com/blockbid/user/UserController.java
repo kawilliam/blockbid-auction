@@ -42,4 +42,23 @@ public class UserController {
 	public ResponseEntity<User> getUser(@PathVariable Long id) {
 		return ResponseEntity.ok(new User());
 	}
+	
+	@PostMapping("/login")
+	public ResponseEntity<?> login(@RequestBody LoginRequest loginRequest) {
+		try {
+			User user = userService.loginUser(loginRequest.getUsername(), loginRequest.getPassword());
+			
+			EntityModel<User> resource = EntityModel.of(user);
+			
+			resource.add(linkTo(methodOn(UserController.class).getUser(user.getId()))
+					.withRel("profile"));
+			resource.add(linkTo(methodOn(UserController.class).getUser(user.getId()))
+					.withRel("search-items")
+					.withHref("/api/items/search"));
+			
+			return ResponseEntity.ok(resource);
+		} catch (Exception e) {
+			return ResponseEntity.badRequest().body(e.getMessage());
+		}
+	}
 }
