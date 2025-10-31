@@ -41,4 +41,10 @@ public class ItemController {
 	public ResponseEntity<Item> getItem(@PathVariable Long id) {
 		return ResponseEntity.ok(new Item());
 	}
+	
+	@GetMapping("/search")
+	public ResponseEntity<List<Item>> searchItems(@RequestParam(required = false) String keyword) {
+		List<Item> items = itemService.searchItems(keyword);
+		return ResponseEntity.ok(items);
+	}
 }

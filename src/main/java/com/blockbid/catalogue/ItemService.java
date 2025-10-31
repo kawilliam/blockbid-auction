@@ -36,4 +36,11 @@ public class ItemService {
 	public List<Item> getAllActiveItems() {
 		return itemRepository.findByStatusOrderByCreatedAtDesc(AuctionStatus.ACTIVE);
 	}
+	
+	public List<Item> searchItems(String keyword) {
+		if (keyword == null || keyword.trim().isEmpty()) {
+			return getAllActiveItems();
+		}
+		return itemRepository.searchByKeyword(keyword.trim(), AuctionStatus.ACTIVE);
+	}
 }
