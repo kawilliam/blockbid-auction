@@ -193,14 +193,6 @@ src/main/java/com/blockbid/
 3. **Real-time Updates:** WebSocket for live bidding planned for Deliverable 3
 4. **Blockchain:** UC8 advanced feature deferred to Deliverable 3
 
-## Team Contributions
-
-Both team members contributed equally to:
-- System design and architecture
-- Backend implementation
-- Testing and validation
-- Documentation
-
 ## Git Repository
 
 https://github.com/kawilliam/blockbid-auction
