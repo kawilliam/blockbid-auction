@@ -63,4 +63,37 @@ public class AuctionService {
 	public Bid getHighestBid(Long itemId) {
 		return bidRepository.findHighestBidForItem(itemId).orElse(null);
 	}
+	
+	@Transactional
+	public Item endAuction(Long itemId) {
+		
+		Item item = itemRepository.findById(itemId)
+				.orElseThrow(() -> new RuntimeException("Item not found"));
+		
+		if (item.getStatus() == AuctionStatus.ENDED) {
+			throw new RuntimeException("Auction already ended");
+		}
+		
+		Bid highestBid = bidRepository.findHighestBidForItem(itemId).orElse(null);
+		
+		if (highestBid == null) {
+			
+			item.setStatus(AuctionStatus.ENDED);
+			itemRepository.save(item);
+			throw new RuntimeException("Auction ended with no bids");
+		}
+		
+		item.setStatus(AuctionStatus.ENDED);
+		itemRepository.save(item);
+		
+		return item;
+	}
+	
+	public boolean isWinner(Long itemId, Long userId) {
+		Bid highestBid = bidRepository.findHighestBidForItem(itemId).orElse(null);
+		if (highestBid == null) {
+			return false;
+		}
+		return highestBid.getBidder().getId().equals(userId);
+	}
 }

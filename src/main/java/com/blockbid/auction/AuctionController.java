@@ -4,7 +4,11 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.hateoas.EntityModel;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+
+import com.blockbid.catalogue.Item;
+
 import java.util.List;
+import java.util.Map;
 
 import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.*;
 
@@ -48,5 +52,29 @@ public class AuctionController {
 			return ResponseEntity.ok("No bids yet");
 		}
 		return ResponseEntity.ok(highestBid);
+	}
+	
+	@PostMapping("/items/{itemId}/end")
+	public ResponseEntity<?> endAuction(@PathVariable Long itemId) {
+		try {
+			Item endedItem = auctionService.endAuction(itemId);
+			
+			Bid highestBid = auctionService.getHighestBid(itemId);
+			
+			return ResponseEntity.ok(Map.of(
+					"message", "Auction ended successfully",
+					"item", endedItem,
+					"winningBid", highestBid,
+					"winner", highestBid.getBidder().getUsername()
+			));
+		} catch (Exception e) {
+			return ResponseEntity.badRequest().body(e.getMessage());
+		}
+	}
+	
+	@GetMapping("/items/{itemId}/winner")
+	public ResponseEntity<?> checkWinner(@PathVariable Long itemId, @RequestParam Long userId) {
+		boolean isWinner = auctionService.isWinner(itemId, userId);
+		return ResponseEntity.ok(Map.of("isWinner", isWinner));
 	}
 }
