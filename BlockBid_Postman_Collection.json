@@ -1,0 +1,530 @@
+{
+	"info": {
+		"_postman_id": "d9c646e7-6ba7-469a-93e7-1bcc21c6a5ba",
+		"name": "EECS 4413 Deliverable 2",
+		"description": "Complete test suite for EECS 4413 BlockBid auction system backend API",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "48421203",
+		"_collection_link": "https://kawilliam-2590675.postman.co/workspace/Kyle-Williamson's-Workspace~f9341a06-0029-4667-895e-ae8012939940/collection/48421203-d9c646e7-6ba7-469a-93e7-1bcc21c6a5ba?action=share&source=collection_link&creator=48421203"
+	},
+	"item": [
+		{
+			"name": "UC1 - User Management",
+			"item": [
+				{
+					"name": "TC001: Successful Sign-Up",
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"username\": \"testuser1\",\n  \"password\": \"password123\",\n  \"firstName\": \"Test\",\n  \"lastName\": \"User\",\n  \"email\": \"test1@example.com\",\n  \"streetNumber\": \"123\",\n  \"streetName\": \"Main St\",\n  \"city\": \"Toronto\",\n  \"country\": \"Canada\",\n  \"postalCode\": \"M1M1M1\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://localhost:8080/api/users/signup",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8080",
+							"path": [
+								"api",
+								"users",
+								"signup"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "TC002: Duplicate Username",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"username\": \"testuser1\",\n  \"password\": \"password456\",\n  \"firstName\": \"Another\",\n  \"lastName\": \"User\",\n  \"email\": \"test2@example.com\",\n  \"city\": \"Toronto\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://localhost:8080/api/users/signup",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8080",
+							"path": [
+								"api",
+								"users",
+								"signup"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "TC003: Successful Login",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"username\": \"testuser1\",\n  \"password\": \"password123\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://localhost:8080/api/users/login",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8080",
+							"path": [
+								"api",
+								"users",
+								"login"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "UC2 - Browse and Search",
+			"item": [
+				{
+					"name": "TC005: Browse All Active Items",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "http://localhost:8080/api/items",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8080",
+							"path": [
+								"api",
+								"items"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "TC006: Search Items by Keyword",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "http://localhost:8080/api/items/search?keyword=camera",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8080",
+							"path": [
+								"api",
+								"items",
+								"search"
+							],
+							"query": [
+								{
+									"key": "keyword",
+									"value": "camera"
+								}
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "UC7 - Item Upload",
+			"item": [
+				{
+					"name": "TC007: Successful Item Creation",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"title\": \"Vintage Camera\",\n  \"description\": \"Canon AE-1 from 1980s, excellent condition\",\n  \"startingPrice\": 150.00,\n  \"auctionEndTime\": \"2025-12-31T23:59:59\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://localhost:8080/api/items?sellerId=1",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8080",
+							"path": [
+								"api",
+								"items"
+							],
+							"query": [
+								{
+									"key": "sellerId",
+									"value": "1"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "TC008: Invalid Seller ID",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"title\": \"Test Item\",\n  \"description\": \"Should fail\",\n  \"startingPrice\": 100.00,\n  \"auctionEndTime\": \"2025-12-31T23:59:59\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://localhost:8080/api/items?sellerId=999",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8080",
+							"path": [
+								"api",
+								"items"
+							],
+							"query": [
+								{
+									"key": "sellerId",
+									"value": "999"
+								}
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "UC3 - Bidding",
+			"item": [
+				{
+					"name": "TC009: Successful Bid Placement",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "http://localhost:8080/api/auctions/items/1/bid?bidderId=1&amount=200",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8080",
+							"path": [
+								"api",
+								"auctions",
+								"items",
+								"1",
+								"bid"
+							],
+							"query": [
+								{
+									"key": "bidderId",
+									"value": "1"
+								},
+								{
+									"key": "amount",
+									"value": "200"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "TC010: Bid Amount Too Low",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "http://localhost:8080/api/auctions/items/1/bid?bidderId=1&amount=150",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8080",
+							"path": [
+								"api",
+								"auctions",
+								"items",
+								"1",
+								"bid"
+							],
+							"query": [
+								{
+									"key": "bidderId",
+									"value": "1"
+								},
+								{
+									"key": "amount",
+									"value": "150"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "TC011: Bid on Ended Auction",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "http://localhost:8080/api/auctions/items/1/bid?bidderId=1&amount=500",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8080",
+							"path": [
+								"api",
+								"auctions",
+								"items",
+								"1",
+								"bid"
+							],
+							"query": [
+								{
+									"key": "bidderId",
+									"value": "1"
+								},
+								{
+									"key": "amount",
+									"value": "500"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "TC012: Get Bid History",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "http://localhost:8080/api/auctions/items/1/bids",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8080",
+							"path": [
+								"api",
+								"auctions",
+								"items",
+								"1",
+								"bids"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "UC4 - Auction End",
+			"item": [
+				{
+					"name": "TC013: End Auction Successfully",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "http://localhost:8080/api/auctions/items/1/end",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8080",
+							"path": [
+								"api",
+								"auctions",
+								"items",
+								"1",
+								"end"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "TC014: Check Winner",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "http://localhost:8080/api/auctions/items/1/winner?userId=1",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8080",
+							"path": [
+								"api",
+								"auctions",
+								"items",
+								"1",
+								"winner"
+							],
+							"query": [
+								{
+									"key": "userId",
+									"value": "1"
+								}
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "UC5 - Payment",
+			"item": [
+				{
+					"name": "TC015: Successful Payment (Winner)",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"cardNumber\": \"4111111111111111\",\n  \"nameOnCard\": \"Test User\",\n  \"expirationDate\": \"12/26\",\n  \"securityCode\": \"123\",\n  \"expeditedShipping\": false\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://localhost:8080/api/payments/items/1?userId=1",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8080",
+							"path": [
+								"api",
+								"payments",
+								"items",
+								"1"
+							],
+							"query": [
+								{
+									"key": "userId",
+									"value": "1"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "TC016: Payment by Non-Winner (Should Fail)",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"cardNumber\": \"4111111111111111\",\n  \"nameOnCard\": \"Wrong User\",\n  \"expirationDate\": \"12/26\",\n  \"securityCode\": \"123\",\n  \"expeditedShipping\": false\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://localhost:8080/api/payments/items/1?userId=2",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8080",
+							"path": [
+								"api",
+								"payments",
+								"items",
+								"1"
+							],
+							"query": [
+								{
+									"key": "userId",
+									"value": "2"
+								}
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "TC004: Invalid Credentials",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"username\": \"testuser1\",\n  \"password\": \"wrongpassword\"\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://localhost:8080/api/users/login",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8080",
+					"path": [
+						"api",
+						"users",
+						"login"
+					]
+				}
+			},
+			"response": []
+		}
+	]
+}
