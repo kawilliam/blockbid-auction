@@ -125,6 +125,3 @@ public class Item {
 	
 }
 
-enum AuctionStatus {
-	ACTIVE, ENDED, CANCELLED
-}
