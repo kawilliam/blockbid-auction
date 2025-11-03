@@ -54,6 +54,32 @@ H2 Console: http://localhost:8080/h2-console
 ==========================================
 ```
 
+### 4. (Optional) Load Sample Data
+
+For easier testing, you can load pre-populated sample data:
+
+**Option A: Using H2 Console**
+1. Start the application
+2. Go to `http://localhost:8080/h2-console`
+3. Login with:
+   - JDBC URL: `jdbc:h2:mem:blockbiddb`
+   - Username: `sa`
+   - Password: (leave blank)
+4. Copy and paste the contents of `sample_data.sql` and execute
+
+**Sample Data Includes:**
+- 3 Users: seller1, buyer1, buyer2 (all passwords: `pass123`)
+- 4 Active auction items
+- 8 bids across different items
+- Items at various stages (no bids, active bidding)
+
+**Quick Test Scenario:**
+1. Login as `buyer1` (password: `pass123`)
+2. Browse items: `GET /api/items`
+3. Place bid on Item 3 (has no bids): `POST /api/auctions/items/3/bid?bidderId=2&amount=350`
+4. End auction: `POST /api/auctions/items/3/end`
+5. Process payment: `POST /api/payments/items/3?userId=2`
+
 ## Testing the API
 
 ### Option 1: Using Postman Collection (Recommended)
