@@ -1,0 +1,7 @@
+com/blockbid/auctionservice/service/AuctionService.class
+com/blockbid/auctionservice/entity/Auction.class
+com/blockbid/auctionservice/entity/Bid.class
+com/blockbid/auctionservice/repository/BidRepository.class
+com/blockbid/auctionservice/AuctionServiceApplication.class
+com/blockbid/auctionservice/controller/AuctionController.class
+com/blockbid/auctionservice/repository/AuctionRepository.class
