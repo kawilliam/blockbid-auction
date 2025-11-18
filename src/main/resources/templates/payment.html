@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Payment - BlockBid</title>
+    <link rel="stylesheet" href="/css/main.css">
+    <link rel="stylesheet" href="/css/payment.css">
+</head>
+<body>
+    <!-- Navigation Bar -->
+    <nav class="navbar">
+        <div class="nav-container">
+            <div class="nav-brand">
+                <h2>BlockBid</h2>
+            </div>
+            <div class="nav-menu">
+                <button class="btn btn-secondary" onclick="location.href='/catalogue.html'">Back to Catalogue</button>
+                <span class="nav-user">Welcome, <strong id="username-display"></strong></span>
+                <button class="btn btn-outline" id="logout-btn">Logout</button>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container">
+        <!-- Payment Header -->
+        <section class="payment-header">
+            <h1>Complete Your Purchase</h1>
+            <p class="congrats-message">Congratulations on winning the auction!</p>
+        </section>
+
+        <div class="payment-layout">
+            <!-- Order Summary -->
+            <section class="order-summary">
+                <h2>Order Summary</h2>
+                
+                <div class="item-summary" id="item-summary">
+                    <div class="loading">Loading order details...</div>
+                </div>
+
+                <div class="cost-breakdown" id="cost-breakdown">
+                    <!-- Will be populated by JavaScript -->
+                </div>
+
+                <div class="total-amount">
+                    <h3>Total Amount: <span id="total-amount">$0.00</span></h3>
+                </div>
+            </section>
+
+            <!-- Payment Form -->
+            <section class="payment-form-section">
+                <h2>Payment Information</h2>
+                
+                <form id="payment-form" class="payment-form">
+                    <!-- Shipping Information -->
+                    <div class="form-section">
+                        <h3>Shipping Address</h3>
+                        <div class="form-group">
+                            <label for="shipping-address">Address</label>
+                            <textarea id="shipping-address" rows="3" readonly></textarea>
+                            <small class="form-help">Address from your profile</small>
+                        </div>
+
+                        <div class="shipping-options">
+                            <h4>Shipping Options</h4>
+                            <div class="radio-group">
+                                <label class="radio-label">
+                                    <input type="radio" name="shipping" value="standard" checked>
+                                    <span class="radio-custom"></span>
+                                    <div class="shipping-info">
+                                        <div class="shipping-name">Standard Shipping</div>
+                                        <div class="shipping-details">5-7 business days • Free</div>
+                                    </div>
+                                </label>
+                                
+                                <label class="radio-label">
+                                    <input type="radio" name="shipping" value="expedited">
+                                    <span class="radio-custom"></span>
+                                    <div class="shipping-info">
+                                        <div class="shipping-name">Expedited Shipping</div>
+                                        <div class="shipping-details">2-3 business days • <span id="expedited-cost">+$15.00</span></div>
+                                    </div>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Payment Details -->
+                    <div class="form-section">
+                        <h3>Credit Card Information</h3>
+                        <p class="security-note">For testing purposes only - Do NOT enter real credit card information</p>
+                        
+                        <div class="form-group">
+                            <label for="card-number">Card Number</label>
+                            <input type="text" id="card-number" placeholder="1234 5678 9012 3456" maxlength="19" required>
+                        </div>
+
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="expiry-date">Expiry Date</label>
+                                <input type="text" id="expiry-date" placeholder="MM/YY" maxlength="5" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="cvv">CVV</label>
+                                <input type="text" id="cvv" placeholder="123" maxlength="3" required>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="cardholder-name">Cardholder Name</label>
+                            <input type="text" id="cardholder-name" placeholder="John Doe" required>
+                        </div>
+                    </div>
+
+                    <div class="payment-actions">
+                        <button type="button" class="btn btn-secondary" onclick="history.back()">
+                            Back to Auction
+                        </button>
+                        <button type="submit" class="btn btn-primary" id="pay-now-btn">
+                            Pay Now
+                        </button>
+                    </div>
+                </form>
+            </section>
+        </div>
+
+        <div id="payment-message" class="message"></div>
+    </div>
+
+    <script src="/js/payment.js"></script>
+</body>
+</html>

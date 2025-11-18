@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Receipt - BlockBid</title>
+    <link rel="stylesheet" href="/css/main.css">
+    <link rel="stylesheet" href="/css/receipt.css">
+</head>
+<body>
+    <!-- Navigation Bar -->
+    <nav class="navbar">
+        <div class="nav-container">
+            <div class="nav-brand">
+                <h2>BlockBid</h2>
+            </div>
+            <div class="nav-menu">
+                <button class="btn btn-secondary" onclick="location.href='/catalogue.html'">Browse More Items</button>
+                <span class="nav-user">Welcome, <strong id="username-display"></strong></span>
+                <button class="btn btn-outline" id="logout-btn">Logout</button>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container">
+        <!-- Success Header -->
+        <section class="success-header">
+            <div class="success-icon">SUCCESS</div>
+            <h1>Payment Successful!</h1>
+            <p class="success-message">Thank you for your purchase. Your order has been confirmed.</p>
+        </section>
+
+        <!-- Receipt Details -->
+        <section class="receipt-section">
+            <div class="receipt-card">
+                <div class="receipt-header">
+                    <h2>Order Receipt</h2>
+                    <div class="receipt-meta">
+                        <div class="order-number">Order #<span id="order-number">Loading...</span></div>
+                        <div class="order-date" id="order-date">Loading...</div>
+                    </div>
+                </div>
+
+                <!-- Item Details -->
+                <div class="receipt-item" id="receipt-item">
+                    <div class="loading">Loading order details...</div>
+                </div>
+
+                <!-- Payment Summary -->
+                <div class="payment-summary" id="payment-summary">
+                    <!-- Will be populated by JavaScript -->
+                </div>
+
+                <!-- Shipping Information -->
+                <div class="shipping-info" id="shipping-info">
+                    <h3>Shipping Information</h3>
+                    <div class="shipping-details">
+                        <div class="shipping-address" id="shipping-address">
+                            Loading shipping details...
+                        </div>
+                        <div class="shipping-method" id="shipping-method">
+                            Loading shipping method...
+                        </div>
+                        <div class="estimated-delivery" id="estimated-delivery">
+                            Calculating delivery time...
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Payment Method -->
+                <div class="payment-method-info" id="payment-method-info">
+                    <h3>Payment Method</h3>
+                    <div class="payment-details">
+                        <div class="card-info" id="card-info">
+                            Loading payment details...
+                        </div>
+                        <div class="transaction-id" id="transaction-id">
+                            Transaction ID: Loading...
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Receipt Actions -->
+                <div class="receipt-actions">
+                    <button class="btn btn-secondary" onclick="window.print()">
+                        Print Receipt
+                    </button>
+                    <button class="btn btn-primary" onclick="location.href='/catalogue.html'">
+                        Continue Shopping
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <!-- Order Status -->
+        <section class="status-section">
+            <div class="status-card">
+                <h3>What's Next?</h3>
+                <div class="status-timeline">
+                    <div class="status-step completed">
+                        <div class="step-icon">DONE</div>
+                        <div class="step-content">
+                            <h4>Payment Confirmed</h4>
+                            <p>Your payment has been processed successfully</p>
+                        </div>
+                    </div>
+                    
+                    <div class="status-step active">
+                        <div class="step-icon">PREP</div>
+                        <div class="step-content">
+                            <h4>Order Processing</h4>
+                            <p>Your item is being prepared for shipment</p>
+                        </div>
+                    </div>
+                    
+                    <div class="status-step">
+                        <div class="step-icon">SHIP</div>
+                        <div class="step-content">
+                            <h4>Shipped</h4>
+                            <p>You'll receive tracking information via email</p>
+                        </div>
+                    </div>
+                    
+                    <div class="status-step">
+                        <div class="step-icon">HOME</div>
+                        <div class="step-content">
+                            <h4>Delivered</h4>
+                            <p id="delivery-estimate">Estimated delivery in 5-7 business days</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Contact Information -->
+        <section class="contact-section">
+            <div class="contact-card">
+                <h3>Need Help?</h3>
+                <p>If you have any questions about your order, please contact our customer support:</p>
+                <div class="contact-info">
+                    <div class="contact-item">
+                        <strong>Email:</strong> support@blockbid.com
+                    </div>
+                    <div class="contact-item">
+                        <strong>Phone:</strong> 1-800-BLOCKBID
+                    </div>
+                    <div class="contact-item">
+                        <strong>Hours:</strong> Monday - Friday, 9 AM - 6 PM EST
+                    </div>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <script src="/js/receipt.js"></script>
+</body>
+</html>
