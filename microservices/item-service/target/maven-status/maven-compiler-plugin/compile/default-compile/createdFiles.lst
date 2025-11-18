@@ -1,0 +1,5 @@
+com/blockbid/itemservice/service/ItemService.class
+com/blockbid/itemservice/entity/Item.class
+com/blockbid/itemservice/controller/ItemController.class
+com/blockbid/itemservice/ItemServiceApplication.class
+com/blockbid/itemservice/repository/ItemRepository.class
