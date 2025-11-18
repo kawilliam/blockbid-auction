@@ -35,4 +35,9 @@ public class WebController {
 	public String receipt() {
 	    return "receipt"; 
 	}
+	
+	@GetMapping("/seller.html")
+	public String seller() {
+	    return "seller";  
+	}
 }
