@@ -3,7 +3,7 @@ package com.blockbid.userservice.service;
 import com.blockbid.userservice.entity.User;
 import com.blockbid.userservice.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.util.Optional;
@@ -14,7 +14,8 @@ public class UserService {
     @Autowired
     private UserRepository userRepository;
     
-    private BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
+    @Autowired
+    private PasswordEncoder passwordEncoder;
     
     public User registerUser(User user) throws Exception {
         // Check if username exists
