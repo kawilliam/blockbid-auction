@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>Bidding - BlockBid</title>
+	<link rel="stylesheet" href="/css/main.css">
+	<link rel="stylesheet" href="/css/bidding.css">
+</head>
+<body>
+	<nav class="navbar">
+		<div class="nav-container">
+			<div class="nav-brand">
+				<h2>BlockBid</h2>
+			</div>
+			<div class="nav-menu">
+				<button class="btn btn-secondary" onclick="location.href='/catalogue.html'">Back to Catalogue</button>
+				<span class="nav-user">Welcome, <strong id="username-display"></strong></span>
+				<button class="btn btn-outline" id="logout-btn">Logout</button>
+			</div>
+		</div>
+	</nav>
+	
+	<div class="container">
+		<section class="item-section">
+			<div class="item-header">
+				<button class="btn btn-secondary back-btn" onclick="history.back()">Back</button>
+				<div class="item-status" id="item-status">
+					<span class="status-badge" id="status-badge">Loading...</span>
+				</div>
+			</div>
+			
+			<div class="item-content">
+				<div class="item-image-large">
+					<span id="item-icon">ITEM</span>
+				</div>
+				
+				<div class="item-details">
+					<h1 id="item-title">Loading...</h1>
+					<p class="item-description" id="item-description">Loading item details...</p>
+					
+					<div class="item-info-grid">
+						<div class="info-card">
+							<h3>Current Price</h3>
+							<div class="current-price" id="current-price">$0.00</div>
+						</div>
+						
+						<div class="info-card">
+							<h3>Total Bids</h3>
+							<div class="bid-count" id="bid-count">0</div>
+						</div>
+						
+						<div class="info-card">
+							<h3>Time Remaining</h3>
+							<div class="time-remianing" id="time-remaining">Loading...</div>
+						</div>
+						
+						<div class="info-card">
+							<h3>Seller</h3>
+							<div class="seller-name" id="seller-name">Loading...</div>
+						</div>
+					</div>
+				</div>
+			</div>
+		</section>
+		
+		<section class="bidding-section" id="bidding-section">
+			<div class="bidding-card">
+				<h2>Place Your Bid</h2>
+				
+				<div class="current-bid-info">
+					<p>Current highest bid: <strong id="highest-bid-amount">$0.00</strong></p>
+					<p class="highest-bidder">by <span id="highest-bidder">No bids yet</span></p>
+				</div>
+				
+				<form id="bid-form" class="bid-form">
+					<div class="form-group">
+						<label for="bid-amount">Your Bid Amount ($)</label>
+						<input type="number" id="bid-amount" step="0.01" min="0" required>
+						<small class="form-help">Minimum bid: $<span id="min-bid">0.00</span></small>
+					</div>
+					
+					<button type="submit" class="btn btn-primary" id="place-bid-btn">
+						Place Bid
+					</button>
+				</form>
+				
+				<div id="bid-message" class="message"></div>
+			</div>
+		</section>
+		
+		<section class="aution-ended-section" id="auction-ended-section" style="display: none;">
+			<div class="ended-card">
+				<h2>Auction Ended</h2>
+				<div class="final-result" id="final-result">
+					<p>This auction has ended.</p>
+				</div>
+			</div>
+		</section>
+		
+		<section class="bid-history-section">
+			<h2>Bid History</h2>
+			<div class="bid-history" id="bid-history">
+				<div class="loading">Loading bid history...</div>
+			</div>
+		</section>
+	</div>
+	
+	<script src="/js/bidding.js"></script>
+</body>
+</html>

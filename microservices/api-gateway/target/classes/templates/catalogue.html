@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Catalogue - BlockBid</title>
+    <link rel="stylesheet" href="/css/main.css">
+    <link rel="stylesheet" href="/css/catalogue.css">
+</head>
+<body>
+    <!-- Navigation Bar -->
+    <nav class="navbar">
+        <div class="nav-container">
+            <div class="nav-brand">
+                <h2>BlockBid</h2>
+            </div>
+            <div class="nav-menu">
+                <span class="nav-user">Welcome, <strong id="username-display"></strong></span>
+                <button class="btn btn-secondary" onclick="location.href='/seller.html'">Sell Item</button>
+                <button class="btn btn-outline" id="logout-btn">Logout</button>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container">
+        <!-- Search Section -->
+        <section class="search-section">
+            <h1>Browse Active Auctions</h1>
+            <div class="search-bar">
+                <input type="text" id="search-input" placeholder="Search for items..." />
+                <button class="btn btn-primary" id="search-btn">Search</button>
+                <button class="btn btn-secondary" id="clear-btn">Clear</button>
+            </div>
+        </section>
+
+        <!-- Filter Section -->
+        <section class="filter-section">
+            <div class="filters">
+                <label>
+                    <input type="radio" name="status" value="all" checked> All Items
+                </label>
+                <label>
+                    <input type="radio" name="status" value="active"> Active Only
+                </label>
+                <label>
+                    <input type="radio" name="status" value="ending-soon"> Ending Soon
+                </label>
+            </div>
+        </section>
+
+        <!-- Items Grid -->
+        <section class="items-section">
+            <div id="items-container" class="items-grid">
+                <!-- Items will be dynamically loaded here -->
+            </div>
+            <div id="loading" class="loading">Loading auctions...</div>
+            <div id="no-results" class="no-results" style="display: none;">
+                <h3>No items found</h3>
+                <p>Try adjusting your search or filters</p>
+            </div>
+        </section>
+    </div>
+
+    <script src="/js/catalogue.js"></script>
+</body>
+</html>

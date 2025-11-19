@@ -1,0 +1,4 @@
+com/blockbid/apigateway/controller/ApiProxyController.class
+com/blockbid/apigateway/config/WebClientConfig.class
+com/blockbid/apigateway/ApiGatewayApplication.class
+com/blockbid/apigateway/controller/FrontendController.class

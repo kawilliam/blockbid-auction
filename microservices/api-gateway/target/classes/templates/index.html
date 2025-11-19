@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BlockBid - Decentralized Auction Marketplace</title>
+    <link rel="stylesheet" href="/css/main.css">
+</head>
+<body>
+    <div class="container">
+        <header class="header">
+            <h1>BlockBid</h1>
+            <p class="tagline">Transparent Auctions on the Blockchain</p>
+        </header>
+
+        <main class="main-content">
+            <div class="auth-container">
+                <div class="tabs">
+                    <button class="tab active" id="signin-tab">Sign In</button>
+                    <button class="tab" id="signup-tab">Sign Up</button>
+                </div>
+
+                <!-- Sign In Form -->
+                <form id="signin-form" class="auth-form active">
+                    <h2>Welcome Back!</h2>
+                    <div class="form-group">
+                        <label for="signin-username">Username</label>
+                        <input type="text" id="signin-username" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="signin-password">Password</label>
+                        <input type="password" id="signin-password" required>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Sign In</button>
+                    <a href="#" class="forgot-password">Forgot password?</a>
+                </form>
+
+                <!-- Sign Up Form -->
+                <form id="signup-form" class="auth-form">
+                    <h2>Create Account</h2>
+                    <div class="form-group">
+                        <label for="signup-username">Username</label>
+                        <input type="text" id="signup-username" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="signup-email">Email</label>
+                        <input type="email" id="signup-email" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="signup-password">Password</label>
+                        <input type="password" id="signup-password" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="signup-firstname">First Name</label>
+                        <input type="text" id="signup-firstname" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="signup-lastname">Last Name</label>
+                        <input type="text" id="signup-lastname" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="signup-address">Address</label>
+                        <input type="text" id="signup-address" placeholder="Street, City, Postal Code" required>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Sign Up</button>
+                </form>
+
+                <div id="message" class="message"></div>
+            </div>
+        </main>
+
+        <footer class="footer">
+            <p>EECS 4413 - Building e-Commerce Systems | York University</p>
+        </footer>
+    </div>
+
+    <script src="/js/auth.js"></script>
+</body>
+</html>
