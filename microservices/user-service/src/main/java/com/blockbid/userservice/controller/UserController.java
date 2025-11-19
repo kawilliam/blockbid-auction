@@ -152,4 +152,12 @@ public class UserController {
             return ResponseEntity.status(401).body(error);
         }
     }
+    
+    @GetMapping("/health")
+    public ResponseEntity<?> healthCheck() {
+        Map<String, String> response = new HashMap<>();
+        response.put("status", "UP");
+        response.put("service", "user-service");
+        return ResponseEntity.ok(response);
+    }
 }

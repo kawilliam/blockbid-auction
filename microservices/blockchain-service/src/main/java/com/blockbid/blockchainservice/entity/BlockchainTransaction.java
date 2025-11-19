@@ -14,10 +14,10 @@ public class BlockchainTransaction {
     @Column(nullable = false, unique = true)
     private String transactionHash;
     
-    @Column(nullable = false)
+    @Column(nullable = true)
     private String blockHash;
     
-    @Column(nullable = false)
+    @Column(nullable = true)
     private Long blockNumber;
     
     @Column(nullable = false)

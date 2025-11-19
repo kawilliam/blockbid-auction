@@ -191,4 +191,12 @@ public class ItemController {
             return ResponseEntity.badRequest().body(error);
         }
     }
+    
+    @GetMapping("/health")
+    public ResponseEntity<Map<String, String>> health() {
+        Map<String, String> status = new HashMap<>();
+        status.put("status", "UP");
+        status.put("service", "item-service"); // Change per service
+        return ResponseEntity.ok(status);
+    }
 }

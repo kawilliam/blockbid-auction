@@ -1,0 +1,121 @@
+version: '3.8'
+
+services:
+  user-service:
+    build:
+      context: ./microservices/user-service
+      dockerfile: Dockerfile
+    image: blockbid/user-service:latest
+    container_name: blockbid-user-service
+    ports:
+      - "8081:8081"
+    volumes:
+      - user_data:/app/data
+    networks:
+      - blockbid-network
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+    restart: unless-stopped
+
+  item-service:
+    build:
+      context: ./microservices/item-service
+      dockerfile: Dockerfile
+    image: blockbid/item-service:latest
+    container_name: blockbid-item-service
+    ports:
+      - "8082:8082"
+    volumes:
+      - item_data:/app/data
+    networks:
+      - blockbid-network
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+    restart: unless-stopped
+
+  auction-service:
+    build:
+      context: ./microservices/auction-service
+      dockerfile: Dockerfile
+    image: blockbid/auction-service:latest
+    container_name: blockbid-auction-service
+    ports:
+      - "8083:8083"
+    volumes:
+      - auction_data:/app/data
+    networks:
+      - blockbid-network
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+    restart: unless-stopped
+
+  payment-service:
+    build:
+      context: ./microservices/payment-service
+      dockerfile: Dockerfile
+    image: blockbid/payment-service:latest
+    container_name: blockbid-payment-service
+    ports:
+      - "8084:8084"
+    volumes:
+      - payment_data:/app/data
+    networks:
+      - blockbid-network
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+    restart: unless-stopped
+
+  blockchain-service:
+    build:
+      context: ./microservices/blockchain-service
+      dockerfile: Dockerfile
+    image: blockbid/blockchain-service:latest
+    container_name: blockbid-blockchain-service
+    ports:
+      - "8085:8085"
+    volumes:
+      - blockchain_data:/app/data
+    networks:
+      - blockbid-network
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+    restart: unless-stopped
+
+  api-gateway:
+    build:
+      context: ./microservices/api-gateway
+      dockerfile: Dockerfile
+    image: blockbid/api-gateway:latest
+    container_name: blockbid-api-gateway
+    ports:
+      - "8080:8080"
+    networks:
+      - blockbid-network
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+    depends_on:
+      - user-service
+      - item-service
+      - auction-service
+      - payment-service
+      - blockchain-service
+    restart: unless-stopped
+
+volumes:
+  user_data:
+    driver: local
+  item_data:
+    driver: local
+  auction_data:
+    driver: local
+  payment_data:
+    driver: local
+  blockchain_data:
+    driver: local
+
+networks:
+  blockbid-network:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.20.0.0/16

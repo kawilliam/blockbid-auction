@@ -186,4 +186,12 @@ public class AuctionController {
             return ResponseEntity.badRequest().body(error);
         }
     }
+    
+    @GetMapping("/health")
+    public ResponseEntity<?> healthCheck() {
+        Map<String, String> response = new HashMap<>();
+        response.put("status", "UP");
+        response.put("service", "auction-service");
+        return ResponseEntity.ok(response);
+    }
 }
