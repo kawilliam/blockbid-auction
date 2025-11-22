@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Listings - BlockBid</title>
+    <link rel="stylesheet" href="css/main.css">
+    <link rel="stylesheet" href="css/my-listings.css">
+</head>
+<body>
+    <!-- Navigation Bar -->
+    <nav class="navbar">
+        <div class="nav-container">
+            <div class="nav-brand">
+                <h2 onclick="location.href='/catalogue.html'" style="cursor: pointer;">BlockBid</h2>
+            </div>
+            <div class="nav-menu">
+                <a href="/catalogue.html" class="nav-link">Browse</a>
+                <a href="/seller.html" class="nav-link">Sell Item</a>
+                <a href="/my-bids.html" class="nav-link">My Bids</a>
+                <a href="/my-listings.html" class="nav-link" style="background-color: rgba(255,255,255,0.1);">My Listings</a>
+                <span class="nav-user">Welcome, <strong id="username-display"></strong></span>
+                <button class="btn btn-outline" id="logout-btn">Logout</button>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container">
+        <section class="my-listings-header">
+            <h1>My Listings</h1>
+            <p class="subtitle">Manage your auction items</p>
+            <button class="btn btn-primary" onclick="location.href='/seller.html'">+ Create New Listing</button>
+        </section>
+
+        <!-- Filter Tabs -->
+        <section class="listing-filters">
+            <button class="filter-btn active" data-filter="all">All Listings</button>
+            <button class="filter-btn" data-filter="active">Active</button>
+            <button class="filter-btn" data-filter="ended">Ended</button>
+            <button class="filter-btn" data-filter="sold">Sold</button>
+        </section>
+
+        <!-- Stats Summary -->
+        <section class="stats-section">
+            <div class="stat-card">
+                <div class="stat-value" id="total-listings">0</div>
+                <div class="stat-label">Total Listings</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="active-listings">0</div>
+                <div class="stat-label">Active Auctions</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="total-bids">0</div>
+                <div class="stat-label">Total Bids</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="total-revenue">$0</div>
+                <div class="stat-label">Total Revenue</div>
+            </div>
+        </section>
+
+        <!-- Listings Grid -->
+        <section class="listings-section">
+            <div id="listings-container" class="listings-grid">
+                <div class="loading">Loading your listings...</div>
+            </div>
+            <div id="no-listings" class="no-results" style="display: none;">
+                <h3>No listings found</h3>
+                <p>You haven't created any auctions yet</p>
+                <button class="btn btn-primary" onclick="location.href='/seller.html'">Create Your First Listing</button>
+            </div>
+        </section>
+    </div>
+
+    <script src="js/my-listings.js"></script>
+</body>
+</html>

@@ -21,10 +21,13 @@ public interface BidRepository extends JpaRepository<Bid, Long> {
     // Find bids by bidder
     List<Bid> findByBidderIdOrderByBidTimeDesc(Long bidderId);
     
-    // Find highest bid for an item
-    @Query("SELECT b FROM Bid b WHERE b.itemId = :itemId AND b.amount = " +
-           "(SELECT MAX(b2.amount) FROM Bid b2 WHERE b2.itemId = :itemId)")
-    Optional<Bid> findHighestBidForItem(@Param("itemId") Long itemId);
+    // Find highest bid for an item - FIXED: Using findFirst to limit to 1 result
+    Optional<Bid> findFirstByItemIdOrderByAmountDescBidTimeDesc(Long itemId);
+    
+    // Alias for backward compatibility
+    default Optional<Bid> findHighestBidForItem(Long itemId) {
+        return findFirstByItemIdOrderByAmountDescBidTimeDesc(itemId);
+    }
     
     // Count bids for an item
     long countByItemId(Long itemId);
@@ -32,8 +35,11 @@ public interface BidRepository extends JpaRepository<Bid, Long> {
     // Check if user has bid on item
     boolean existsByItemIdAndBidderId(Long itemId, Long bidderId);
     
-    // Find user's highest bid for an item
-    @Query("SELECT b FROM Bid b WHERE b.itemId = :itemId AND b.bidderId = :bidderId " +
-           "AND b.amount = (SELECT MAX(b2.amount) FROM Bid b2 WHERE b2.itemId = :itemId AND b2.bidderId = :bidderId)")
-    Optional<Bid> findUserHighestBidForItem(@Param("itemId") Long itemId, @Param("bidderId") Long bidderId);
+    // Find user's highest bid for an item - FIXED: Using findFirst
+    Optional<Bid> findFirstByItemIdAndBidderIdOrderByAmountDescBidTimeDesc(Long itemId, Long bidderId);
+    
+    // Alias for backward compatibility
+    default Optional<Bid> findUserHighestBidForItem(Long itemId, Long bidderId) {
+        return findFirstByItemIdAndBidderIdOrderByAmountDescBidTimeDesc(itemId, bidderId);
+    }
 }

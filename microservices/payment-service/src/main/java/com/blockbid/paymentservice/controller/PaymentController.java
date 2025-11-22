@@ -2,6 +2,7 @@ package com.blockbid.paymentservice.controller;
 
 import com.blockbid.paymentservice.entity.Payment;
 import com.blockbid.paymentservice.service.PaymentService;
+import com.blockbid.paymentservice.validation.PaymentValidator;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -20,9 +21,15 @@ public class PaymentController {
     private PaymentService paymentService;
     
     // Process payment (UC5 - Payment functionality)
-    @PostMapping("/payments/process")
+    @PostMapping("/process")
     public ResponseEntity<?> processPayment(@RequestBody Map<String, Object> request) {
         try {
+            // Validate input
+            Map<String, String> validationErrors = PaymentValidator.validatePayment(request);
+            if (!validationErrors.isEmpty()) {
+                return ResponseEntity.badRequest().body(validationErrors);
+            }
+            
             Payment payment = paymentService.processPayment(request);
             
             Map<String, Object> response = new HashMap<>();
@@ -36,13 +43,24 @@ public class PaymentController {
             
         } catch (Exception e) {
             Map<String, String> error = new HashMap<>();
-            error.put("message", e.getMessage());
+            
+            // Handle specific payment errors
+            if (e.getMessage().contains("Payment declined")) {
+                error.put("message", "Payment was declined. Please check your card details.");
+            } else if (e.getMessage().contains("Insufficient funds")) {
+                error.put("message", "Insufficient funds. Please use a different payment method.");
+            } else if (e.getMessage().contains("not the winner")) {
+                error.put("message", "You are not the winner of this auction");
+            } else {
+                error.put("message", "Payment processing failed: " + e.getMessage());
+            }
+            
             return ResponseEntity.badRequest().body(error);
         }
     }
     
     // Get payment details
-    @GetMapping("/payments/{id}")
+    @GetMapping("/{id}")
     public ResponseEntity<?> getPayment(@PathVariable Long id) {
         try {
             Optional<Payment> paymentOptional = paymentService.getPaymentById(id);
@@ -63,7 +81,7 @@ public class PaymentController {
     }
     
     // Get payment receipt (UC6 - Receipt functionality)
-    @GetMapping("/payments/{id}/receipt")
+    @GetMapping("/{id}/receipt")
     public ResponseEntity<?> getPaymentReceipt(@PathVariable Long id) {
         try {
             Map<String, Object> receipt = paymentService.getPaymentReceipt(id);
@@ -77,7 +95,7 @@ public class PaymentController {
     }
     
     // Get payment by transaction ID
-    @GetMapping("/payments/transaction/{transactionId}")
+    @GetMapping("/transaction/{transactionId}")
     public ResponseEntity<?> getPaymentByTransactionId(@PathVariable String transactionId) {
         try {
             Optional<Payment> paymentOptional = paymentService.getPaymentByTransactionId(transactionId);

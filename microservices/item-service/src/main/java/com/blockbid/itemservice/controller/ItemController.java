@@ -3,6 +3,7 @@ package com.blockbid.itemservice.controller;
 import com.blockbid.itemservice.entity.Item;
 import com.blockbid.itemservice.service.ItemService;
 import org.springframework.beans.factory.annotation.Autowired;
+import com.blockbid.itemservice.validation.ItemValidator;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -21,9 +22,15 @@ public class ItemController {
     private ItemService itemService;
     
     // Create new item (UC7 - Seller functionality)
-    @PostMapping("/items")
+    @PostMapping("/")
     public ResponseEntity<?> createItem(@RequestBody Map<String, Object> request) {
         try {
+            // Validate input
+            Map<String, String> validationErrors = ItemValidator.validateItem(request);
+            if (!validationErrors.isEmpty()) {
+                return ResponseEntity.badRequest().body(validationErrors);
+            }
+            
             Item item = new Item();
             item.setName((String) request.get("name"));
             item.setDescription((String) request.get("description"));
@@ -33,7 +40,6 @@ public class ItemController {
             item.setAuctionType((String) request.get("auctionType"));
             item.setSellerId(Long.valueOf(request.get("sellerId").toString()));
             
-            // Parse end time from ISO string
             String endTimeStr = (String) request.get("endTime");
             item.setEndTime(LocalDateTime.parse(endTimeStr));
             
@@ -63,13 +69,13 @@ public class ItemController {
             
         } catch (Exception e) {
             Map<String, String> error = new HashMap<>();
-            error.put("message", e.getMessage());
+            error.put("message", "Failed to create item: " + e.getMessage());
             return ResponseEntity.badRequest().body(error);
         }
     }
     
     // Get all active items
-    @GetMapping("/items")
+    @GetMapping("/")
     public ResponseEntity<?> getAllItems() {
         try {
             List<Item> items = itemService.getAllActiveItems();
@@ -82,7 +88,7 @@ public class ItemController {
     }
     
     // Search items
-    @GetMapping("/items/search")
+    @GetMapping("/search")
     public ResponseEntity<?> searchItems(@RequestParam(required = false) String keyword) {
         try {
             List<Item> items = itemService.searchItems(keyword);
@@ -95,7 +101,7 @@ public class ItemController {
     }
     
     // Get item by ID
-    @GetMapping("/items/{id}")
+    @GetMapping("/{id}")
     public ResponseEntity<?> getItem(@PathVariable Long id) {
         try {
             Optional<Item> itemOptional = itemService.getItemById(id);
@@ -116,7 +122,7 @@ public class ItemController {
     }
     
     // Get items by category
-    @GetMapping("/items/category/{category}")
+    @GetMapping("/category/{category}")
     public ResponseEntity<?> getItemsByCategory(@PathVariable String category) {
         try {
             List<Item> items = itemService.getItemsByCategory(category);
@@ -142,7 +148,7 @@ public class ItemController {
     }
     
     // Update item bid (called by Auction Service)
-    @PutMapping("/items/{id}/bid")
+    @PutMapping("/{id}/bid")
     public ResponseEntity<?> updateItemBid(@PathVariable Long id, 
                                            @RequestBody Map<String, Object> request) {
         try {
@@ -161,7 +167,7 @@ public class ItemController {
     }
     
     // End auction
-    @PutMapping("/items/{id}/end")
+    @PutMapping("/{id}/end")
     public ResponseEntity<?> endAuction(@PathVariable Long id) {
         try {
             Item item = itemService.endAuction(id);
@@ -180,7 +186,7 @@ public class ItemController {
     }
     
     // Get items ending soon
-    @GetMapping("/items/ending-soon")
+    @GetMapping("/ending-soon")
     public ResponseEntity<?> getItemsEndingSoon() {
         try {
             List<Item> items = itemService.getItemsEndingSoon();

@@ -33,9 +33,10 @@
 
 /* ===== ORDER SUMMARY ===== */
 .order-summary {
-    background: white;
-    border: 2px solid var(--border-color);
-    border-radius: 16px;
+    background: #111111;
+    border: 1px solid #333333;
+    border-radius: 0;
+    box-shadow: none;
     padding: 30px;
     height: fit-content;
     position: sticky;
@@ -145,9 +146,10 @@
 
 /* ===== PAYMENT FORM ===== */
 .payment-form-section {
-    background: white;
-    border: 2px solid var(--border-color);
-    border-radius: 16px;
+    background: #111111;
+    border: 1px solid #333333;
+    border-radius: 0;
+    box-shadow: none;
     padding: 30px;
 }
 
@@ -190,8 +192,10 @@
 .form-group textarea {
     width: 100%;
     padding: 12px;
-    border: 2px solid var(--border-color);
-    border-radius: 8px;
+    background: #222222;
+    border: 1px solid #333333;
+    color: #ffffff;
+    border-radius: 0;
     font-size: 1rem;
     transition: border-color 0.3s ease;
 }

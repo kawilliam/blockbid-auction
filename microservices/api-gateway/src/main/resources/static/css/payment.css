@@ -33,9 +33,10 @@
 
 /* ===== ORDER SUMMARY ===== */
 .order-summary {
-    background: white;
-    border: 2px solid var(--border-color);
-    border-radius: 16px;
+    background: #111111;
+    border: 1px solid #333333;
+    border-radius: 0;
+    box-shadow: none;
     padding: 30px;
     height: fit-content;
     position: sticky;
@@ -57,20 +58,20 @@
     display: flex;
     gap: 15px;
     padding: 20px;
-    background: var(--light-bg);
-    border-radius: 12px;
-    border: 1px solid var(--border-color);
+    background: #0a0a0a;
+    border: 1px solid #222222;
+    border-radius: 0;
 }
 
 .item-image-small {
     width: 80px;
     height: 80px;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    border-radius: 8px;
+    background: #222222;
+    border-radius: 0;
+    color: #666666;
     display: flex;
     align-items: center;
     justify-content: center;
-    color: white;
     font-weight: 600;
     flex-shrink: 0;
 }
@@ -145,9 +146,10 @@
 
 /* ===== PAYMENT FORM ===== */
 .payment-form-section {
-    background: white;
-    border: 2px solid var(--border-color);
-    border-radius: 16px;
+    background: #111111;
+    border: 1px solid #333333;
+    border-radius: 0;
+    box-shadow: none;
     padding: 30px;
 }
 
@@ -190,8 +192,10 @@
 .form-group textarea {
     width: 100%;
     padding: 12px;
-    border: 2px solid var(--border-color);
-    border-radius: 8px;
+    background: #000000;
+    border: 1px solid #444444;
+    color: #ffffff;
+    border-radius: 0;
     font-size: 1rem;
     transition: border-color 0.3s ease;
 }
@@ -199,7 +203,8 @@
 .form-group input:focus,
 .form-group textarea:focus {
     outline: none;
-    border-color: var(--primary-color);
+    border-color: #ffffff;
+	box-shadow: none;
 }
 
 .form-group textarea {
@@ -248,13 +253,13 @@
 }
 
 .radio-label:hover {
-    border-color: var(--primary-color);
-    background: var(--light-bg);
+    border-color: #ffffff;
+    background: #0a0a0a;
 }
 
 .radio-label:has(input:checked) {
-    border-color: var(--primary-color);
-    background: rgba(37, 99, 235, 0.05);
+    border-color: #ffffff;
+	background: #0a0a0a;
 }
 
 .radio-custom {

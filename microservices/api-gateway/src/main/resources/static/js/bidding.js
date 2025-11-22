@@ -153,30 +153,116 @@ function setupActiveBidding(item) {
 // ===== SETUP BID FORM =====
 function setupBidForm() {
     const bidForm = document.getElementById('bid-form');
+    const bidInput = document.getElementById('bid-amount');
+    
+    // Clear error on input
+    bidInput.addEventListener('input', clearBidFieldError);
     
     bidForm.addEventListener('submit', async (e) => {
         e.preventDefault();
+        clearBidFieldError();
         
-        const bidAmount = parseFloat(document.getElementById('bid-amount').value);
-        const minBid = currentItem.currentPrice + 0.01;
+        const bidAmount = document.getElementById('bid-amount').value;
         
-        // Validation
-        if (bidAmount < minBid) {
-            showBidMessage(`Bid must be at least $${minBid.toFixed(2)}`, 'error');
+        // Validate bid amount
+        const validation = validateBidAmount(bidAmount, currentItem.currentPrice);
+        
+        if (!validation.valid) {
+            showBidFieldError(validation.error);
             return;
         }
         
-        await placeBid(bidAmount);
+        await placeBid(parseFloat(bidAmount));
     });
+}
+
+// ===== BID VALIDATION =====
+function validateBidAmount(amount, currentPrice) {
+    const minBid = currentPrice + 0.01;
+    
+    // Check if empty
+    if (!amount || amount === '') {
+        return { valid: false, error: 'Please enter a bid amount' };
+    }
+    
+    // Check if numeric
+    const numericAmount = parseFloat(amount);
+    if (isNaN(numericAmount)) {
+        return { valid: false, error: 'Bid amount must be a valid number' };
+    }
+    
+    // Check if positive
+    if (numericAmount <= 0) {
+        return { valid: false, error: 'Bid amount must be greater than $0' };
+    }
+    
+    // Check if meets minimum
+    if (numericAmount < minBid) {
+        return { valid: false, error: `Bid must be at least $${minBid.toFixed(2)}` };
+    }
+    
+    // Check if too high (sanity check)
+    if (numericAmount > currentPrice * 100) {
+        return { valid: false, error: 'Bid amount seems unreasonably high. Please verify.' };
+    }
+    
+    // Check decimal places
+    if ((numericAmount * 100) % 1 !== 0) {
+        return { valid: false, error: 'Bid amount can only have up to 2 decimal places' };
+    }
+    
+    return { valid: true };
+}
+
+function showBidFieldError(message) {
+    const bidInput = document.getElementById('bid-amount');
+    bidInput.style.borderColor = '#dc2626';
+    
+    const existingError = bidInput.parentElement.querySelector('.bid-field-error');
+    if (existingError) {
+        existingError.remove();
+    }
+    
+    const errorDiv = document.createElement('div');
+    errorDiv.className = 'bid-field-error';
+    errorDiv.style.color = '#dc2626';
+    errorDiv.style.fontSize = '0.85rem';
+    errorDiv.style.marginTop = '5px';
+    errorDiv.textContent = message;
+    
+    bidInput.parentElement.appendChild(errorDiv);
+}
+
+function clearBidFieldError() {
+    const bidInput = document.getElementById('bid-amount');
+    bidInput.style.borderColor = '';
+    
+    const existingError = bidInput.parentElement.querySelector('.bid-field-error');
+    if (existingError) {
+        existingError.remove();
+    }
 }
 
 // ===== PLACE BID =====
 async function placeBid(amount) {
     const placeBidBtn = document.getElementById('place-bid-btn');
     
+    // Additional validation
+    if (isNaN(amount) || amount <= 0) {
+        showBidMessage('Please enter a valid bid amount', 'error');
+        return;
+    }
+    
+    if (!currentItem || !itemId) {
+        showBidMessage('Item information not loaded', 'error');
+        return;
+    }
+    
     try {
         placeBidBtn.disabled = true;
         placeBidBtn.textContent = 'Placing Bid...';
+        
+        console.log('Placing bid:', { itemId, amount, bidderId: userId }); // Debug log
         
         const response = await fetch(`/api/auctions/${itemId}/bid`, {
             method: 'POST',
@@ -185,32 +271,50 @@ async function placeBid(amount) {
                 'Authorization': `Bearer ${token}`
             },
             body: JSON.stringify({
-                amount: amount,
-                userId: userId
+                amount: parseFloat(amount),
+                bidderId: parseInt(userId) 
             })
         });
         
+        if (response.status === 401) {
+            showBidMessage('Session expired. Please log in again.', 'error');
+            setTimeout(() => {
+                localStorage.clear();
+                window.location.href = '/';
+            }, 2000);
+            return;
+        }
+        
         const result = await response.json();
         
-        if (response.ok) {
-            showBidMessage('Bid placed successfully!', 'success');
-            
-            // Clear form
-            document.getElementById('bid-amount').value = '';
-            
-            // Refresh data
-            setTimeout(() => {
-                loadItemDetails();
-                loadBidHistory();
-            }, 1000);
-            
-        } else {
-            showBidMessage(result.message || 'Failed to place bid', 'error');
+        if (!response.ok) {
+            // Handle field-specific errors
+            if (result.field === 'amount') {
+                showBidFieldError(result.message);
+            } else {
+                showBidMessage(result.message || 'Failed to place bid', 'error');
+            }
+            return;
         }
+        
+        showBidMessage('Bid placed successfully!', 'success');
+        
+        // Clear form
+        document.getElementById('bid-amount').value = '';
+        clearBidFieldError();
+		
+		loadItemDetails();
+		loadBidHistory();
+        
+        // Refresh data
+        setTimeout(() => {
+            loadItemDetails();
+            loadBidHistory();
+        }, 1000);
         
     } catch (error) {
         console.error('Error placing bid:', error);
-        showBidMessage('Error connecting to server', 'error');
+        showBidMessage('Error connecting to server. Please try again.', 'error');
     } finally {
         placeBidBtn.disabled = false;
         placeBidBtn.textContent = 'Place Bid';
@@ -244,20 +348,50 @@ async function loadBidHistory() {
 function displayBidHistory(bids) {
     const historyContainer = document.getElementById('bid-history');
     
-    if (bids.length === 0) {
+    if (!bids || bids.length === 0) {
         historyContainer.innerHTML = '<div class="loading">No bids placed yet</div>';
         return;
     }
     
-    const historyHtml = bids.map(bid => `
-        <div class="bid-entry">
-            <div class="bid-info">
-                <div class="bid-amount">$${bid.amount.toFixed(2)}</div>
-                <div class="bid-user">by ${bid.bidderName || 'Unknown'}</div>
+    // Remove duplicates based on bid ID
+    const uniqueBids = [];
+    const seenIds = new Set();
+    
+    for (const bid of bids) {
+        if (!seenIds.has(bid.id)) {
+            seenIds.add(bid.id);
+            uniqueBids.push(bid);
+        }
+    }
+    
+    // Sort by amount (highest first), then by time (newest first)
+    uniqueBids.sort((a, b) => {
+        if (b.amount !== a.amount) {
+            return b.amount - a.amount;
+        }
+        // Compare timestamps
+        const timeA = Array.isArray(a.bidTime) ? new Date(a.bidTime[0], a.bidTime[1]-1, a.bidTime[2], a.bidTime[3], a.bidTime[4], a.bidTime[5]).getTime() : 0;
+        const timeB = Array.isArray(b.bidTime) ? new Date(b.bidTime[0], b.bidTime[1]-1, b.bidTime[2], b.bidTime[3], b.bidTime[4], b.bidTime[5]).getTime() : 0;
+        return timeB - timeA;
+    });
+    
+    const historyHtml = uniqueBids.map(bid => {
+        // Format the bid time
+        const timeDisplay = formatBidTime(bid.bidTime);
+        
+        // Get bidder name
+        const bidderDisplay = bid.bidderName || `User #${bid.bidderId}`;
+        
+        return `
+            <div class="bid-entry">
+                <div class="bid-info">
+                    <div class="bid-amount">$${bid.amount.toFixed(2)}</div>
+                    <div class="bid-user">by ${bidderDisplay}</div>
+                </div>
+                <div class="bid-time">${timeDisplay}</div>
             </div>
-            <div class="bid-time">${formatBidTime(bid.timestamp)}</div>
-        </div>
-    `).join('');
+        `;
+    }).join('');
     
     historyContainer.innerHTML = historyHtml;
 }
@@ -350,8 +484,46 @@ function getTimeRemaining(endTime) {
 }
 
 function formatBidTime(timestamp) {
-    const date = new Date(timestamp);
-    return date.toLocaleString();
+	try {
+	        let date;
+	        
+	        // Handle Java LocalDateTime array format: [year, month, day, hour, minute, second, nano]
+	        if (Array.isArray(timestamp)) {
+	            // Month is 1-based in Java, but 0-based in JavaScript
+	            date = new Date(
+	                timestamp[0],        // year
+	                timestamp[1] - 1,    // month (subtract 1!)
+	                timestamp[2],        // day
+	                timestamp[3] || 0,   // hour
+	                timestamp[4] || 0,   // minute
+	                timestamp[5] || 0    // second
+	            );
+	        } else if (typeof timestamp === 'string') {
+	            // Handle ISO string format
+	            date = new Date(timestamp);
+	        } else {
+	            return 'Recently';
+	        }
+	        
+	        // Check if date is valid
+	        if (isNaN(date.getTime())) {
+	            console.error('Invalid date created from:', timestamp);
+	            return 'Recently';
+	        }
+	        
+	        // Format the date nicely
+	        return date.toLocaleString('en-US', {
+	            month: 'short',
+	            day: 'numeric',
+	            hour: 'numeric',
+	            minute: '2-digit',
+	            hour12: true
+	        });
+	        
+    } catch (e) {
+        console.error('Error parsing timestamp:', timestamp, e);
+        return 'Recently';
+    }
 }
 
 function showBidMessage(text, type) {

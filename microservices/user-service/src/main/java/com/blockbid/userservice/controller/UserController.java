@@ -3,6 +3,7 @@ package com.blockbid.userservice.controller;
 import com.blockbid.userservice.config.JwtUtils;
 import com.blockbid.userservice.entity.User;
 import com.blockbid.userservice.service.UserService;
+import com.blockbid.userservice.validation.UserValidator;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -25,6 +26,12 @@ public class UserController {
     @PostMapping("/signup")
     public ResponseEntity<?> registerUser(@RequestBody Map<String, String> request) {
         try {
+            // Validate input
+            Map<String, String> validationErrors = UserValidator.validateSignup(request);
+            if (!validationErrors.isEmpty()) {
+                return ResponseEntity.badRequest().body(validationErrors);
+            }
+            
             User user = new User(
                 request.get("username"),
                 request.get("password"),
@@ -45,7 +52,18 @@ public class UserController {
             
         } catch (Exception e) {
             Map<String, String> error = new HashMap<>();
-            error.put("message", e.getMessage());
+            
+            // Check for specific database errors
+            if (e.getMessage().contains("Username is already taken")) {
+                error.put("field", "username");
+                error.put("message", "Username is already taken");
+            } else if (e.getMessage().contains("Email is already in use")) {
+                error.put("field", "email");
+                error.put("message", "Email is already in use");
+            } else {
+                error.put("message", e.getMessage());
+            }
+            
             return ResponseEntity.badRequest().body(error);
         }
     }
@@ -53,6 +71,12 @@ public class UserController {
     @PostMapping("/login")
     public ResponseEntity<?> loginUser(@RequestBody Map<String, String> request) {
         try {
+            // Validate input
+            Map<String, String> validationErrors = UserValidator.validateLogin(request);
+            if (!validationErrors.isEmpty()) {
+                return ResponseEntity.badRequest().body(validationErrors);
+            }
+            
             String username = request.get("username");
             String password = request.get("password");
             
@@ -69,7 +93,15 @@ public class UserController {
             
         } catch (Exception e) {
             Map<String, String> error = new HashMap<>();
-            error.put("message", e.getMessage());
+            
+            // Specific error for invalid credentials
+            if (e.getMessage().contains("Invalid username or password")) {
+                error.put("field", "username");
+                error.put("message", "Invalid username or password");
+            } else {
+                error.put("message", e.getMessage());
+            }
+            
             return ResponseEntity.badRequest().body(error);
         }
     }

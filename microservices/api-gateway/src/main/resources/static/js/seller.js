@@ -154,6 +154,138 @@ function validateField(event) {
     }
     
     return true;
+	
+	
+}
+
+// ===== COMPREHENSIVE ITEM VALIDATION =====
+function validateItemName(name) {
+    if (!name || name.trim().length === 0) {
+        return { valid: false, error: 'Item name is required' };
+    }
+    if (name.trim().length < 3) {
+        return { valid: false, error: 'Item name must be at least 3 characters' };
+    }
+    if (name.trim().length > 100) {
+        return { valid: false, error: 'Item name cannot exceed 100 characters' };
+    }
+    return { valid: true };
+}
+
+function validateItemDescription(description) {
+    if (!description || description.trim().length === 0) {
+        return { valid: false, error: 'Description is required' };
+    }
+    if (description.trim().length < 10) {
+        return { valid: false, error: 'Description must be at least 10 characters' };
+    }
+    if (description.trim().length > 500) {
+        return { valid: false, error: 'Description cannot exceed 500 characters' };
+    }
+    return { valid: true };
+}
+
+function validateStartingPrice(price) {
+    if (!price || price === '') {
+        return { valid: false, error: 'Starting price is required' };
+    }
+    
+    const numericPrice = parseFloat(price);
+    if (isNaN(numericPrice)) {
+        return { valid: false, error: 'Price must be a valid number' };
+    }
+    
+    if (numericPrice <= 0) {
+        return { valid: false, error: 'Starting price must be greater than $0' };
+    }
+    
+    if (numericPrice > 1000000) {
+        return { valid: false, error: 'Starting price cannot exceed $1,000,000' };
+    }
+    
+    if ((numericPrice * 100) % 1 !== 0) {
+        return { valid: false, error: 'Price can only have up to 2 decimal places' };
+    }
+    
+    return { valid: true };
+}
+
+function validateReservePriceAgainstStarting(reservePrice, startingPrice) {
+    if (!reservePrice || reservePrice === '') {
+        return { valid: true }; // Optional field
+    }
+    
+    const numericReserve = parseFloat(reservePrice);
+    const numericStarting = parseFloat(startingPrice);
+    
+    if (isNaN(numericReserve)) {
+        return { valid: false, error: 'Reserve price must be a valid number' };
+    }
+    
+    if (numericReserve < numericStarting) {
+        return { valid: false, error: `Reserve price must be at least $${numericStarting.toFixed(2)} (starting price)` };
+    }
+    
+    return { valid: true };
+}
+
+function validateCategory(category) {
+    if (!category || category === '') {
+        return { valid: false, error: 'Please select a category' };
+    }
+    return { valid: true };
+}
+
+function validateCondition(condition) {
+    if (!condition || condition === '') {
+        return { valid: false, error: 'Please select item condition' };
+    }
+    return { valid: true };
+}
+
+function validateDuration(duration) {
+    if (!duration || duration === '') {
+        return { valid: false, error: 'Please select auction duration' };
+    }
+    return { valid: true };
+}
+
+function showSellerFieldError(fieldId, errorMessage) {
+    const field = document.getElementById(fieldId);
+    const existingError = field.parentElement.querySelector('.seller-field-error');
+    
+    if (existingError) {
+        existingError.remove();
+    }
+    
+    field.style.borderColor = '#dc2626';
+    
+    const errorDiv = document.createElement('div');
+    errorDiv.className = 'seller-field-error';
+    errorDiv.style.color = '#dc2626';
+    errorDiv.style.fontSize = '0.85rem';
+    errorDiv.style.marginTop = '5px';
+    errorDiv.textContent = errorMessage;
+    
+    field.parentElement.appendChild(errorDiv);
+}
+
+function clearSellerFieldError(fieldId) {
+    const field = document.getElementById(fieldId);
+    const existingError = field.parentElement.querySelector('.seller-field-error');
+    
+    if (existingError) {
+        existingError.remove();
+    }
+    
+    field.style.borderColor = '';
+}
+
+function clearAllSellerErrors() {
+    document.querySelectorAll('.seller-field-error').forEach(error => error.remove());
+    document.querySelectorAll('#seller-form input, #seller-form textarea, #seller-form select').forEach(input => {
+        input.style.borderColor = '';
+    });
 }
 
 function validateReservePrice() {
@@ -215,23 +347,85 @@ async function handleFormSubmission(event) {
 }
 
 function validateForm() {
-    const form = document.getElementById('seller-form');
-    const requiredFields = form.querySelectorAll('input[required], textarea[required], select[required]');
-    let isValid = true;
+    clearAllSellerErrors();
+    let hasErrors = false;
     
-    requiredFields.forEach(field => {
-        if (!validateField({ target: field })) {
-            isValid = false;
+    // Validate item name
+    const name = document.getElementById('item-name').value;
+    const nameValidation = validateItemName(name);
+    if (!nameValidation.valid) {
+        showSellerFieldError('item-name', nameValidation.error);
+        hasErrors = true;
+    }
+    
+    // Validate description
+    const description = document.getElementById('item-description').value;
+    const descValidation = validateItemDescription(description);
+    if (!descValidation.valid) {
+        showSellerFieldError('item-description', descValidation.error);
+        hasErrors = true;
+    }
+    
+    // Validate category
+    const category = document.getElementById('item-category').value;
+    const categoryValidation = validateCategory(category);
+    if (!categoryValidation.valid) {
+        showSellerFieldError('item-category', categoryValidation.error);
+        hasErrors = true;
+    }
+    
+    // Validate condition
+    const condition = document.getElementById('item-condition').value;
+    const conditionValidation = validateCondition(condition);
+    if (!conditionValidation.valid) {
+        showSellerFieldError('item-condition', conditionValidation.error);
+        hasErrors = true;
+    }
+    
+    // Validate starting price
+    const startingPrice = document.getElementById('starting-price').value;
+    const priceValidation = validateStartingPrice(startingPrice);
+    if (!priceValidation.valid) {
+        showSellerFieldError('starting-price', priceValidation.error);
+        hasErrors = true;
+    }
+    
+    // Validate reserve price (against starting price)
+    const reservePrice = document.getElementById('reserve-price').value;
+    const reserveValidation = validateReservePriceAgainstStarting(reservePrice, startingPrice);
+    if (!reserveValidation.valid) {
+        showSellerFieldError('reserve-price', reserveValidation.error);
+        hasErrors = true;
+    }
+    
+    // Validate duration
+    const duration = document.getElementById('auction-duration').value;
+    const durationValidation = validateDuration(duration);
+    if (!durationValidation.valid) {
+        showSellerFieldError('auction-duration', durationValidation.error);
+        hasErrors = true;
+    }
+    
+    if (hasErrors) {
+        showSellerMessage('Please fix the errors above', 'error');
+        const firstError = document.querySelector('.seller-field-error');
+        if (firstError) {
+            firstError.scrollIntoView({ behavior: 'smooth', block: 'center' });
         }
-    });
+    }
     
-    return isValid;
+    return !hasErrors;
 }
 
 function collectFormData() {
     const durationDays = parseInt(document.getElementById('auction-duration').value);
+    
+    // Calculate end time properly
     const endTime = new Date();
     endTime.setDate(endTime.getDate() + durationDays);
+    
+    // Format as ISO string for Java LocalDateTime (remove milliseconds and Z)
+    const endTimeISO = endTime.toISOString().split('.')[0]; // "2025-11-27T22:31:00"
     
     return {
         name: document.getElementById('item-name').value.trim(),
@@ -241,7 +435,7 @@ function collectFormData() {
         startingPrice: parseFloat(document.getElementById('starting-price').value),
         reservePrice: parseFloat(document.getElementById('reserve-price').value) || null,
         auctionType: document.getElementById('auction-type').value,
-        endTime: endTime.toISOString(),
+        endTime: endTimeISO,  // Properly formatted ISO string
         shippingCost: parseFloat(document.getElementById('shipping-cost').value) || 0,
         expeditedShippingCost: parseFloat(document.getElementById('expedited-shipping').value) || 15,
         shippingDetails: document.getElementById('shipping-details').value.trim() || null,
@@ -251,6 +445,28 @@ function collectFormData() {
 
 async function submitAuctionItem(itemData) {
     const createBtn = document.getElementById('create-auction-btn');
+    
+    // Log the data being sent for debugging
+    console.log('Submitting auction item:', itemData);
+    console.log('End Time:', itemData.endTime);
+    
+    // Validate data one more time
+    if (!itemData.name || !itemData.description || !itemData.startingPrice) {
+        showSellerMessage('Please fill in all required fields', 'error');
+        return;
+    }
+    
+    if (itemData.startingPrice <= 0) {
+        showSellerMessage('Starting price must be greater than $0', 'error');
+        return;
+    }
+    
+    // Validate endTime format
+    if (!itemData.endTime || itemData.endTime.length < 19) {
+        showSellerMessage('Invalid auction end time', 'error');
+        console.error('Invalid endTime format:', itemData.endTime);
+        return;
+    }
     
     try {
         createBtn.disabled = true;
@@ -265,20 +481,33 @@ async function submitAuctionItem(itemData) {
             body: JSON.stringify(itemData)
         });
         
+        if (response.status === 401) {
+            showSellerMessage('Session expired. Please log in again.', 'error');
+            setTimeout(() => {
+                localStorage.clear();
+                window.location.href = '/';
+            }, 2000);
+            return;
+        }
+        
         const result = await response.json();
         
-        if (response.ok) {
-            showSuccessOverlay(result);
-        } else if (response.status === 401) {
-            localStorage.clear();
-            window.location.href = '/';
-        } else {
-            showSellerMessage(result.message || 'Failed to create auction', 'error');
+        if (!response.ok) {
+            // Handle field-specific errors
+            if (result.field) {
+                showSellerFieldError(result.field, result.message);
+                showSellerMessage(result.message, 'error');
+            } else {
+                showSellerMessage(result.message || 'Failed to create auction', 'error');
+            }
+            return;
         }
+        
+        showSuccessOverlay(result);
         
     } catch (error) {
         console.error('Error creating auction:', error);
-        showSellerMessage('Error connecting to server', 'error');
+        showSellerMessage('Error connecting to server. Please try again.', 'error');
     } finally {
         createBtn.disabled = false;
         createBtn.textContent = 'Create Auction';

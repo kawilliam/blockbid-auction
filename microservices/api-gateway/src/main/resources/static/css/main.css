@@ -6,23 +6,88 @@
 }
 
 :root {
-    --primary-color: #2563eb;
-    --secondary-color: #1e40af;
-    --success-color: #10b981;
-    --danger-color: #ef4444;
-    --warning-color: #f59e0b;
-    --dark-bg: #1f2937;
-    --light-bg: #f9fafb;
-    --border-color: #e5e7eb;
-    --text-primary: #111827;
-    --text-secondary: #6b7280;
+    --primary-color: #ffffff;
+    --secondary-color: #000000;
+    --success-color: #ffffff;
+    --danger-color: #ffffff;
+    --warning-color: #ffffff;
+    --dark-bg: #000000;
+    --light-bg: #000000;
+    --border-color: #222222;
+    --text-primary: #ffffff;
+    --text-secondary: #999999;
+}
+
+/* ===== CONSISTENT NAVIGATION BAR ===== */
+.navbar {
+    background-color: #000000;
+    padding: 1rem 0;
+    border-bottom: 1px solid #333333;
+    position: sticky;
+    top: 0;
+    z-index: 1000;
+}
+
+.nav-container {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 0 2rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.nav-brand h2 {
+    color: #ffffff;
+    margin: 0;
+    font-size: 1.8rem;
+    font-weight: 700;
+    letter-spacing: 1px;
+    cursor: pointer;
+}
+
+.nav-menu {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+/* Navigation Links - FIXED VISIBILITY */
+.nav-link {
+    color: #ffffff !important;
+    text-decoration: none;
+    padding: 8px 16px;
+    border: 1px solid #555555;
+    border-radius: 4px;
+    transition: all 0.2s;
+    font-weight: 500;
+    font-size: 0.9rem;
+    background-color: transparent;
+    cursor: pointer;
+}
+
+.nav-link:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+    border-color: #ffffff;
+}
+
+.nav-user {
+    color: #cccccc;
+    margin: 0 10px;
+    font-size: 0.9rem;
+}
+
+.nav-user strong {
+    color: #ffffff;
 }
 
 body {
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    font-family: 'Helvetica Neue', Arial, sans-serif;
+    background: #000000;
     min-height: 100vh;
-    color: var(--text-primary);
+    color: #ffffff;
+    font-weight: 300;
+    letter-spacing: 0.5px;
 }
 
 .container {
@@ -39,14 +104,17 @@ body {
 }
 
 .header h1 {
-    font-size: 3rem;
+    font-size: 4rem;
     margin-bottom: 10px;
-    text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+    text-shadow: none;
+    font-weight: 100;
+    letter-spacing: 3px;
 }
 
 .tagline {
-    font-size: 1.2rem;
-    opacity: 0.9;
+    font-size: 1rem;
+    opacity: 0.7;
+    font-weight: 300;
 }
 
 /* ===== MAIN CONTENT ===== */
@@ -58,12 +126,13 @@ body {
 }
 
 .auth-container {
-    background: white;
-    border-radius: 12px;
-    box-shadow: 0 20px 60px rgba(0,0,0,0.3);
-    padding: 40px;
+    background: #111111;
+    border-radius: 0;
+    box-shadow: none;
+    padding: 60px;
     width: 100%;
     max-width: 500px;
+    border: 1px solid #333333;
 }
 
 /* ===== TABS ===== */
@@ -82,7 +151,7 @@ body {
     font-size: 1rem;
     font-weight: 600;
     cursor: pointer;
-    border-radius: 8px;
+    border-radius: 0;
     transition: all 0.3s ease;
 }
 
@@ -130,7 +199,7 @@ body {
     width: 100%;
     padding: 12px;
     border: 2px solid var(--border-color);
-    border-radius: 8px;
+    border-radius: 0px;
     font-size: 1rem;
     transition: border-color 0.3s ease;
 }
@@ -145,7 +214,7 @@ body {
     width: 100%;
     padding: 14px;
     border: none;
-    border-radius: 8px;
+    border-radius: 0px;
     font-size: 1rem;
     font-weight: 600;
     cursor: pointer;
@@ -153,14 +222,20 @@ body {
 }
 
 .btn-primary {
-    background: var(--primary-color);
-    color: white;
+    background: #ffffff;
+    color: #000000;
+    border: 1px solid #ffffff;
+    border-radius: 0;
+    font-weight: 300;
+    text-transform: uppercase;
+    letter-spacing: 1px;
 }
 
 .btn-primary:hover {
-    background: var(--secondary-color);
-    transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(37, 99, 235, 0.4);
+    background: #cccccc;
+    color: #000000;
+    transform: none;
+    box-shadow: none;
 }
 
 .forgot-password {

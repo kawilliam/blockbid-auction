@@ -3,26 +3,32 @@ package com.blockbid.auctionservice.controller;
 import com.blockbid.auctionservice.entity.Auction;
 import com.blockbid.auctionservice.entity.Bid;
 import com.blockbid.auctionservice.service.AuctionService;
+import com.blockbid.auctionservice.validation.BidValidator;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.client.RestTemplate;
 
 import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.ArrayList;
 
 @RestController
 @RequestMapping("/")
 @CrossOrigin(origins = "*")
 public class AuctionController {
+	
+	@Autowired
+    private RestTemplate restTemplate;
     
     @Autowired
     private AuctionService auctionService;
     
     // Create auction (called by Item Service when item is created)
-    @PostMapping("/auctions")
+    @PostMapping("/")
     public ResponseEntity<?> createAuction(@RequestBody Map<String, Object> request) {
         try {
             Auction auction = new Auction();
@@ -54,14 +60,86 @@ public class AuctionController {
     }
     
     // Place bid (UC3 - Core bidding functionality)
-    @PostMapping("/auctions/{itemId}/bids")
-    public ResponseEntity<?> placeBid(@PathVariable Long itemId, 
-                                     @RequestBody Map<String, Object> request) {
+    @PostMapping("/{itemId}/bid")
+    public ResponseEntity<?> placeBid(@PathVariable Long itemId, @RequestBody Map<String, Object> request) {
         try {
-            Long bidderId = Long.valueOf(request.get("bidderId").toString());
-            Double bidAmount = Double.valueOf(request.get("amount").toString());
+        	System.out.println("=== PLACE BID REQUEST ===");
+            System.out.println("Item ID: " + itemId);
+            System.out.println("Request body: " + request);
+            // Get current auction to check current price
+            Optional<Auction> auctionOpt = auctionService.getAuctionByItemId(itemId);
+            if (auctionOpt.isEmpty()) {
+                Map<String, String> error = new HashMap<>();
+                error.put("message", "Auction not found");
+                return ResponseEntity.notFound().build();
+            }
             
+            Auction auction = auctionOpt.get();
+            System.out.println("Auction found - Status: " + auction.getStatus() + ", Current Price: " + auction.getCurrentPrice());
+            
+            // Check if auction is still active
+            if (!"ACTIVE".equals(auction.getStatus())) {
+                Map<String, String> error = new HashMap<>();
+                error.put("message", "Auction has ended");
+                return ResponseEntity.badRequest().body(error);
+            }
+            
+            // Validate bid
+            Map<String, String> validationErrors = BidValidator.validateBid(request, auction.getCurrentPrice());
+            if (!validationErrors.isEmpty()) {
+            	System.out.println("ERROR: Validation failed - " + validationErrors);
+                return ResponseEntity.badRequest().body(validationErrors);
+            }
+            
+            Long bidderId;
+            try {
+                Object bidderIdObj = request.get("bidderId");
+                if (bidderIdObj == null) {
+                	System.out.println("ERROR: bidderId is null");
+                    Map<String, String> error = new HashMap<>();
+                    error.put("field", "bidderId");
+                    error.put("message", "Bidder ID is required");
+                    return ResponseEntity.badRequest().body(error);
+                }
+                bidderId = Long.valueOf(bidderIdObj.toString());
+                System.out.println("Bidder ID parsed: " + bidderId);
+            } catch (NumberFormatException e) {
+            	System.out.println("ERROR: Invalid bidderId format - " + e.getMessage());
+                Map<String, String> error = new HashMap<>();
+                error.put("field", "bidderId");
+                error.put("message", "Invalid bidder ID format");
+                return ResponseEntity.badRequest().body(error);
+            }
+            
+            Double bidAmount;
+            try {
+                Object amountObj = request.get("amount");
+                if (amountObj == null) {
+                	System.out.println("ERROR: amount is null");
+                    Map<String, String> error = new HashMap<>();
+                    error.put("field", "amount");
+                    error.put("message", "Bid amount is required");
+                    return ResponseEntity.badRequest().body(error);
+                }
+                
+                // Handle both Integer and Double from JSON
+                if (amountObj instanceof Number) {
+                    bidAmount = ((Number) amountObj).doubleValue();
+                } else {
+                    bidAmount = Double.valueOf(amountObj.toString());
+                }
+                System.out.println("Bid amount parsed: " + bidAmount);
+            } catch (NumberFormatException e) {
+            	System.out.println("ERROR: Invalid amount format - " + e.getMessage());
+                Map<String, String> error = new HashMap<>();
+                error.put("field", "amount");
+                error.put("message", "Invalid bid amount format");
+                return ResponseEntity.badRequest().body(error);
+            }
+            
+            System.out.println("Calling placeBid service with: itemId=" + itemId + ", bidderId=" + bidderId + ", amount=" + bidAmount);
             Bid bid = auctionService.placeBid(itemId, bidderId, bidAmount);
+            System.out.println("Bid placed successfully - Bid ID: " + bid.getId());
             
             Map<String, Object> response = new HashMap<>();
             response.put("message", "Bid placed successfully");
@@ -73,14 +151,25 @@ public class AuctionController {
             return ResponseEntity.ok(response);
             
         } catch (Exception e) {
+        	System.out.println("ERROR in placeBid: " + e.getMessage());
             Map<String, String> error = new HashMap<>();
-            error.put("message", e.getMessage());
+            
+            // Handle specific errors
+            if (e.getMessage().contains("Bid must be higher")) {
+                error.put("field", "amount");
+                error.put("message", e.getMessage());
+            } else if (e.getMessage().contains("Auction has ended")) {
+                error.put("message", "Auction has ended");
+            } else {
+                error.put("message", "Failed to place bid: " + e.getMessage());
+            }
+            
             return ResponseEntity.badRequest().body(error);
         }
     }
     
     // Get auction details
-    @GetMapping("/auctions/{itemId}")
+    @GetMapping("/{itemId}")
     public ResponseEntity<?> getAuction(@PathVariable Long itemId) {
         try {
             Optional<Auction> auctionOptional = auctionService.getAuctionByItemId(itemId);
@@ -109,11 +198,39 @@ public class AuctionController {
     }
     
     // Get bid history
-    @GetMapping("/auctions/{itemId}/bids")
+    @GetMapping("/{itemId}/bids")
     public ResponseEntity<?> getBidHistory(@PathVariable Long itemId) {
-        try {
+    	try {
             List<Bid> bids = auctionService.getBidHistory(itemId);
-            return ResponseEntity.ok(bids);
+            
+            // Enhance bids with bidder information
+            List<Map<String, Object>> enhancedBids = new ArrayList<>();
+            
+            for (Bid bid : bids) {
+                Map<String, Object> bidMap = new HashMap<>();
+                bidMap.put("id", bid.getId());
+                bidMap.put("itemId", bid.getItemId());
+                bidMap.put("bidderId", bid.getBidderId());
+                bidMap.put("amount", bid.getAmount());
+                bidMap.put("bidTime", bid.getBidTime());
+                bidMap.put("status", bid.getStatus());
+                
+                // Try to fetch bidder name from user service
+                try {
+                    String userServiceUrl = "http://user-service:8081/users/" + bid.getBidderId();
+                    Map<String, Object> user = restTemplate.getForObject(userServiceUrl, Map.class);
+                    if (user != null && user.get("username") != null) {
+                        bidMap.put("bidderName", user.get("username"));
+                    }
+                } catch (Exception e) {
+                    // If user service call fails, just use the ID
+                    bidMap.put("bidderName", "User #" + bid.getBidderId());
+                }
+                
+                enhancedBids.add(bidMap);
+            }
+            
+            return ResponseEntity.ok(enhancedBids);
         } catch (Exception e) {
             Map<String, String> error = new HashMap<>();
             error.put("message", e.getMessage());
@@ -122,7 +239,7 @@ public class AuctionController {
     }
     
     // Get highest bid
-    @GetMapping("/auctions/{itemId}/highest-bid")
+    @GetMapping("/{itemId}/highest-bid")
     public ResponseEntity<?> getHighestBid(@PathVariable Long itemId) {
         try {
             Optional<Bid> highestBid = auctionService.getHighestBid(itemId);
@@ -156,7 +273,7 @@ public class AuctionController {
     }
     
     // End auction
-    @PutMapping("/auctions/{itemId}/end")
+    @PutMapping("/{itemId}/end")
     public ResponseEntity<?> endAuction(@PathVariable Long itemId) {
         try {
             Auction auction = auctionService.endAuction(itemId);
@@ -175,7 +292,7 @@ public class AuctionController {
     }
     
     // Get active auctions
-    @GetMapping("/auctions")
+    @GetMapping("/")
     public ResponseEntity<?> getActiveAuctions() {
         try {
             List<Auction> auctions = auctionService.getActiveAuctions();

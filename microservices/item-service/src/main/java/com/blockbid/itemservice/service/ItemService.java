@@ -4,9 +4,13 @@ import com.blockbid.itemservice.entity.Item;
 import com.blockbid.itemservice.repository.ItemRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.client.RestTemplate;
 
 import java.time.LocalDateTime;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 @Service
@@ -14,6 +18,11 @@ public class ItemService {
     
     @Autowired
     private ItemRepository itemRepository;
+    
+    @Autowired
+    private RestTemplate restTemplate;
+    
+    private static final String AUCTION_SERVICE_URL = "http://auction-service:8083";
     
     // Create new item (UC7 - Seller functionality)
     public Item createItem(Item item) throws Exception {
@@ -39,7 +48,43 @@ public class ItemService {
         item.setCurrentPrice(item.getStartingPrice());
         item.setBidCount(0);
         
-        return itemRepository.save(item);
+        // Save item first
+        Item savedItem = itemRepository.save(item);
+        
+        System.out.println("✓ Item created - ID: " + savedItem.getId());
+        
+        // ===== CREATE AUCTION IN AUCTION SERVICE =====
+        try {
+            Map<String, Object> auctionRequest = new HashMap<>();
+            auctionRequest.put("itemId", savedItem.getId());
+            auctionRequest.put("sellerId", savedItem.getSellerId());
+            auctionRequest.put("startingPrice", savedItem.getStartingPrice());
+            auctionRequest.put("endTime", savedItem.getEndTime().toString());
+            
+            if (savedItem.getReservePrice() != null) {
+                auctionRequest.put("reservePrice", savedItem.getReservePrice());
+            }
+            
+            System.out.println("→ Creating auction: " + auctionRequest);
+            
+            @SuppressWarnings("unchecked")
+            Map<String, Object> auctionResponse = restTemplate.postForObject(
+                AUCTION_SERVICE_URL + "/",
+                auctionRequest,
+                Map.class
+            );
+            
+            System.out.println("✓ Auction created: " + auctionResponse);
+            
+        } catch (Exception e) {
+            System.err.println("✗ ERROR: Failed to create auction: " + e.getMessage());
+            e.printStackTrace();
+            // Rollback item creation
+            itemRepository.delete(savedItem);
+            throw new Exception("Failed to create auction: " + e.getMessage());
+        }
+        
+        return savedItem;
     }
     
     // Get all active items

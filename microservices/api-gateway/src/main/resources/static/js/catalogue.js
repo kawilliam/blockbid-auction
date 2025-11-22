@@ -21,6 +21,62 @@ document.getElementById('logout-btn').addEventListener('click', () => {
 let allItems = [];
 let currentFilter = 'all';
 
+// ===== SEARCH VALIDATION =====
+function validateSearchKeyword(keyword) {
+    if (!keyword || keyword.trim().length === 0) {
+        return { valid: false, error: 'Please enter a search term' };
+    }
+    
+    if (keyword.trim().length < 2) {
+        return { valid: false, error: 'Search term must be at least 2 characters' };
+    }
+    
+    if (keyword.trim().length > 100) {
+        return { valid: false, error: 'Search term is too long (max 100 characters)' };
+    }
+    
+    return { valid: true };
+}
+
+function showSearchError(message) {
+    const searchInput = document.getElementById('search-input');
+    searchInput.style.borderColor = '#dc2626';
+    
+    const existingError = searchInput.parentElement.querySelector('.search-error');
+    if (existingError) {
+        existingError.remove();
+    }
+    
+    const errorDiv = document.createElement('div');
+    errorDiv.className = 'search-error';
+    errorDiv.style.color = '#dc2626';
+    errorDiv.style.fontSize = '0.85rem';
+    errorDiv.style.marginTop = '5px';
+    errorDiv.textContent = message;
+    
+    searchInput.parentElement.appendChild(errorDiv);
+    
+    // Auto-clear after 3 seconds
+    setTimeout(() => {
+        const error = searchInput.parentElement.querySelector('.search-error');
+        if (error) {
+            error.remove();
+            searchInput.style.borderColor = '';
+        }
+    }, 3000);
+}
+
+function clearSearchError() {
+    const searchInput = document.getElementById('search-input');
+    const existingError = searchInput.parentElement.querySelector('.search-error');
+    
+    if (existingError) {
+        existingError.remove();
+    }
+    
+    searchInput.style.borderColor = '';
+}
+
 // ===== LOAD ITEMS ON PAGE LOAD =====
 window.addEventListener('DOMContentLoaded', () => {
     loadItems();
@@ -28,13 +84,25 @@ window.addEventListener('DOMContentLoaded', () => {
 
 // ===== SEARCH FUNCTIONALITY =====
 document.getElementById('search-btn').addEventListener('click', () => {
+    clearSearchError();
     const keyword = document.getElementById('search-input').value.trim();
-    if (keyword) {
-        searchItems(keyword);
-    } else {
-        loadItems();
+    
+    if (!keyword) {
+        loadItems(); // Show all items if search is empty
+        return;
     }
+    
+    const validation = validateSearchKeyword(keyword);
+    if (!validation.valid) {
+        showSearchError(validation.error);
+        return;
+    }
+    
+    searchItems(keyword);
 });
+
+// Clear error on input
+document.getElementById('search-input').addEventListener('input', clearSearchError);
 
 // Search on Enter key
 document.getElementById('search-input').addEventListener('keypress', (e) => {

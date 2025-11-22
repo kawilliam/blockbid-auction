@@ -194,6 +194,52 @@ function setupPaymentForm() {
         e.preventDefault();
         await processPayment();
     });
+	
+    // Real-time validation
+    cardNumberInput.addEventListener('blur', () => {
+        const validation = validateCardNumber(cardNumberInput.value);
+        if (!validation.valid) {
+            showPaymentFieldError('card-number', validation.error);
+        }
+    });
+    
+    cardNumberInput.addEventListener('focus', () => {
+        clearPaymentFieldError('card-number');
+    });
+    
+    expiryInput.addEventListener('blur', () => {
+        const validation = validateExpiryDate(expiryInput.value);
+        if (!validation.valid) {
+            showPaymentFieldError('expiry-date', validation.error);
+        }
+    });
+    
+    expiryInput.addEventListener('focus', () => {
+        clearPaymentFieldError('expiry-date');
+    });
+    
+    cvvInput.addEventListener('blur', () => {
+        const validation = validateCVV(cvvInput.value);
+        if (!validation.valid) {
+            showPaymentFieldError('cvv', validation.error);
+        }
+    });
+    
+    cvvInput.addEventListener('focus', () => {
+        clearPaymentFieldError('cvv');
+    });
+    
+    const cardholderInput = document.getElementById('cardholder-name');
+    cardholderInput.addEventListener('blur', () => {
+        const validation = validateCardholderName(cardholderInput.value);
+        if (!validation.valid) {
+            showPaymentFieldError('cardholder-name', validation.error);
+        }
+    });
+    
+    cardholderInput.addEventListener('focus', () => {
+        clearPaymentFieldError('cardholder-name');
+    });
 }
 
 // ===== PROCESS PAYMENT =====
@@ -254,45 +300,194 @@ async function processPayment() {
     }
 }
 
-// ===== VALIDATE PAYMENT FORM =====
-function validatePaymentForm() {
-    const cardNumber = document.getElementById('card-number').value.replace(/\s/g, '');
-    const expiryDate = document.getElementById('expiry-date').value;
-    const cvv = document.getElementById('cvv').value;
-    const cardholderName = document.getElementById('cardholder-name').value.trim();
+// ===== PAYMENT FIELD VALIDATION =====
+function validateCardNumber(cardNumber) {
+    const cleaned = cardNumber.replace(/\s/g, '');
     
-    // Card number validation (simplified)
-    if (cardNumber.length < 13 || cardNumber.length > 19) {
-        showPaymentMessage('Please enter a valid card number', 'error');
-        return false;
+    if (!cleaned) {
+        return { valid: false, error: 'Card number is required' };
     }
     
-    // Expiry date validation
+    if (!/^\d+$/.test(cleaned)) {
+        return { valid: false, error: 'Card number can only contain digits' };
+    }
+    
+    if (cleaned.length < 13) {
+        return { valid: false, error: 'Card number is too short (minimum 13 digits)' };
+    }
+    
+    if (cleaned.length > 19) {
+        return { valid: false, error: 'Card number is too long (maximum 19 digits)' };
+    }
+    
+    // Luhn algorithm check
+    if (!luhnCheck(cleaned)) {
+        return { valid: false, error: 'Invalid card number (failed checksum)' };
+    }
+    
+    return { valid: true };
+}
+
+function luhnCheck(cardNumber) {
+    let sum = 0;
+    let isEven = false;
+    
+    for (let i = cardNumber.length - 1; i >= 0; i--) {
+        let digit = parseInt(cardNumber[i]);
+        
+        if (isEven) {
+            digit *= 2;
+            if (digit > 9) {
+                digit -= 9;
+            }
+        }
+        
+        sum += digit;
+        isEven = !isEven;
+    }
+    
+    return sum % 10 === 0;
+}
+
+function validateExpiryDate(expiryDate) {
+    if (!expiryDate) {
+        return { valid: false, error: 'Expiry date is required' };
+    }
+    
     if (!/^\d{2}\/\d{2}$/.test(expiryDate)) {
-        showPaymentMessage('Please enter a valid expiry date (MM/YY)', 'error');
-        return false;
+        return { valid: false, error: 'Expiry date must be in MM/YY format' };
     }
     
-    // Check if expiry date is not in the past
-    const [month, year] = expiryDate.split('/');
+    const [month, year] = expiryDate.split('/').map(num => parseInt(num));
+    
+    if (month < 1 || month > 12) {
+        return { valid: false, error: 'Invalid month (must be 01-12)' };
+    }
+    
     const currentDate = new Date();
     const currentYear = currentDate.getFullYear() % 100;
     const currentMonth = currentDate.getMonth() + 1;
     
-    if (parseInt(year) < currentYear || (parseInt(year) === currentYear && parseInt(month) < currentMonth)) {
-        showPaymentMessage('Card has expired', 'error');
-        return false;
+    if (year < currentYear || (year === currentYear && month < currentMonth)) {
+        return { valid: false, error: 'Card has expired' };
     }
     
-    // CVV validation
-    if (cvv.length < 3 || cvv.length > 4) {
-        showPaymentMessage('Please enter a valid CVV', 'error');
-        return false;
+    if (year > currentYear + 20) {
+        return { valid: false, error: 'Expiry date is too far in the future' };
     }
     
-    // Cardholder name validation
-    if (cardholderName.length < 2) {
-        showPaymentMessage('Please enter cardholder name', 'error');
+    return { valid: true };
+}
+
+function validateCVV(cvv) {
+    if (!cvv) {
+        return { valid: false, error: 'CVV is required' };
+    }
+    
+    if (!/^\d{3,4}$/.test(cvv)) {
+        return { valid: false, error: 'CVV must be 3 or 4 digits' };
+    }
+    
+    return { valid: true };
+}
+
+function validateCardholderName(name) {
+    if (!name || name.trim().length === 0) {
+        return { valid: false, error: 'Cardholder name is required' };
+    }
+    
+    if (name.trim().length < 2) {
+        return { valid: false, error: 'Name is too short (minimum 2 characters)' };
+    }
+    
+    if (name.trim().length > 50) {
+        return { valid: false, error: 'Name is too long (maximum 50 characters)' };
+    }
+    
+    if (!/^[a-zA-Z\s'-]+$/.test(name.trim())) {
+        return { valid: false, error: 'Name can only contain letters, spaces, hyphens, and apostrophes' };
+    }
+    
+    return { valid: true };
+}
+
+function showPaymentFieldError(fieldId, errorMessage) {
+    const field = document.getElementById(fieldId);
+    const existingError = field.parentElement.querySelector('.payment-field-error');
+    
+    if (existingError) {
+        existingError.remove();
+    }
+    
+    field.style.borderColor = '#dc2626';
+    
+    const errorDiv = document.createElement('div');
+    errorDiv.className = 'payment-field-error';
+    errorDiv.style.color = '#dc2626';
+    errorDiv.style.fontSize = '0.85rem';
+    errorDiv.style.marginTop = '5px';
+    errorDiv.textContent = errorMessage;
+    
+    field.parentElement.appendChild(errorDiv);
+}
+
+function clearPaymentFieldError(fieldId) {
+    const field = document.getElementById(fieldId);
+    const existingError = field.parentElement.querySelector('.payment-field-error');
+    
+    if (existingError) {
+        existingError.remove();
+    }
+    
+    field.style.borderColor = '';
+}
+
+function clearAllPaymentErrors() {
+    document.querySelectorAll('.payment-field-error').forEach(error => error.remove());
+    document.querySelectorAll('#payment-form input').forEach(input => input.style.borderColor = '');
+}
+
+// ===== VALIDATE PAYMENT FORM =====
+function validatePaymentForm() {
+    clearAllPaymentErrors();
+    
+    const cardNumber = document.getElementById('card-number').value;
+    const expiryDate = document.getElementById('expiry-date').value;
+    const cvv = document.getElementById('cvv').value;
+    const cardholderName = document.getElementById('cardholder-name').value;
+    
+    let hasErrors = false;
+    
+    // Validate card number
+    const cardValidation = validateCardNumber(cardNumber);
+    if (!cardValidation.valid) {
+        showPaymentFieldError('card-number', cardValidation.error);
+        hasErrors = true;
+    }
+    
+    // Validate expiry date
+    const expiryValidation = validateExpiryDate(expiryDate);
+    if (!expiryValidation.valid) {
+        showPaymentFieldError('expiry-date', expiryValidation.error);
+        hasErrors = true;
+    }
+    
+    // Validate CVV
+    const cvvValidation = validateCVV(cvv);
+    if (!cvvValidation.valid) {
+        showPaymentFieldError('cvv', cvvValidation.error);
+        hasErrors = true;
+    }
+    
+    // Validate cardholder name
+    const nameValidation = validateCardholderName(cardholderName);
+    if (!nameValidation.valid) {
+        showPaymentFieldError('cardholder-name', nameValidation.error);
+        hasErrors = true;
+    }
+    
+    if (hasErrors) {
+        showPaymentMessage('Please fix the errors above', 'error');
         return false;
     }
     

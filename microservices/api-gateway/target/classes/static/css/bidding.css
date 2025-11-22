@@ -57,8 +57,8 @@
 }
 
 .item-image-large {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    border-radius: 12px;
+    background: #333333;
+    border-radius: 0;
     height: 300px;
     display: flex;
     align-items: center;
@@ -77,6 +77,8 @@
     color: var(--text-primary);
     margin-bottom: 15px;
     line-height: 1.2;
+    font-weight: 100;
+    letter-spacing: 1px;
 }
 
 .item-description {
@@ -94,9 +96,9 @@
 }
 
 .info-card {
-    background: white;
-    border: 2px solid var(--border-color);
-    border-radius: 12px;
+    background: #111111;
+    border: 1px solid #333333;
+    border-radius: 0;
     padding: 20px;
     text-align: center;
     transition: border-color 0.3s ease;
@@ -145,11 +147,11 @@
 }
 
 .bidding-card {
-    background: white;
-    border-radius: 16px;
+    background: #111111;
+    border: 1px solid #333333;
+    border-radius: 0;
+    box-shadow: none;
     padding: 30px;
-    box-shadow: 0 8px 24px rgba(0,0,0,0.1);
-    border: 3px solid var(--primary-color);
 }
 
 .bidding-card h2 {
@@ -160,8 +162,8 @@
 }
 
 .current-bid-info {
-    background: var(--light-bg);
-    border-radius: 8px;
+    background: #222222;
+    border-radius: 0;
     padding: 20px;
     margin-bottom: 25px;
     text-align: center;

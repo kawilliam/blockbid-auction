@@ -15,16 +15,17 @@
 .success-icon {
     width: 80px;
     height: 80px;
-    background: var(--success-color);
-    color: white;
-    border-radius: 50%;
+    background: #ffffff;
+    color: #000000;
+    border: 2px solid #ffffff;
+    border-radius: 0;
+    box-shadow: none;
     display: flex;
     align-items: center;
     justify-content: center;
     font-size: 0.9rem;
     font-weight: 700;
     margin: 0 auto 20px;
-    box-shadow: 0 4px 16px rgba(16, 185, 129, 0.3);
 }
 
 .success-header h1 {
@@ -44,16 +45,16 @@
 }
 
 .receipt-card {
-    background: white;
-    border: 2px solid var(--border-color);
-    border-radius: 16px;
+    background: #111111;
+    border: 1px solid #333333;
+    border-radius: 0;
+    box-shadow: none;
     overflow: hidden;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
 }
 
 .receipt-header {
-    background: var(--primary-color);
-    color: white;
+    background: #ffffff;
+    color: #000000;
     padding: 25px 30px;
     display: flex;
     justify-content: space-between;
@@ -95,12 +96,12 @@
 .item-image-receipt {
     width: 100px;
     height: 100px;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    border-radius: 8px;
+    background: #222222;
+    border-radius: 0;
+    color: #666666;
     display: flex;
     align-items: center;
     justify-content: center;
-    color: white;
     font-weight: 600;
     flex-shrink: 0;
 }
@@ -182,10 +183,11 @@
 }
 
 .shipping-address {
-    background: var(--light-bg);
+    background: #0a0a0a;
+    border: 1px solid #222222;
+    border-radius: 0;
+    color: #cccccc;
     padding: 15px;
-    border-radius: 8px;
-    border: 1px solid var(--border-color);
     font-family: monospace;
     line-height: 1.5;
 }
@@ -255,11 +257,12 @@
 
 .transaction-id {
     font-family: monospace;
-    background: var(--light-bg);
     padding: 10px;
-    border-radius: 6px;
+    background: #0a0a0a;
+    border: 1px solid #222222;
+    border-radius: 0;
+    color: #999999;
     font-size: 0.9rem;
-    color: var(--text-secondary);
 }
 
 /* ===== RECEIPT ACTIONS ===== */

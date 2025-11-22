@@ -6,8 +6,9 @@ body {
 
 /* ===== NAVIGATION BAR ===== */
 .navbar {
-    background: white;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    background: #000000;
+    box-shadow: none;
+    border-bottom: 1px solid #333333;
     position: sticky;
     top: 0;
     z-index: 1000;
@@ -23,7 +24,9 @@ body {
 }
 
 .nav-brand h2 {
-    color: var(--primary-color);
+    color: #ffffff;
+    font-weight: 100;
+    letter-spacing: 2px;
     margin: 0;
 }
 
@@ -34,7 +37,8 @@ body {
 }
 
 .nav-user {
-    color: var(--text-secondary);
+    color: #999999;
+    font-weight: 500;
 }
 
 .btn-secondary {
@@ -60,12 +64,14 @@ body {
 /* ===== SEARCH SECTION ===== */
 .search-section {
     text-align: center;
-    padding: 40px 20px;
+    padding: 80px 20px;
 }
 
 .search-section h1 {
     color: var(--text-primary);
-    margin-bottom: 20px;
+    font-weight: 100;
+    letter-spacing: 2px;
+    margin-bottom: 40px;
 }
 
 .search-bar {
@@ -78,17 +84,24 @@ body {
 .search-bar input {
     flex: 1;
     padding: 12px 20px;
-    border: 2px solid var(--border-color);
-    border-radius: 8px;
+    background: #000000;
+    border: 1px solid #444444;
+    color: #ffffff;
+    border-radius: 0;
     font-size: 1rem;
 }
 
 .search-bar input:focus {
     outline: none;
-    border-color: var(--primary-color);
+    border-color: #ffffff;
+    
 }
 
 .search-bar button {
+	background: #ffffff;
+    color: #000000;
+    border-radius: 0;
+    border: 1px solid #ffffff;
     padding: 12px 24px;
     width: auto;
 }
@@ -96,11 +109,12 @@ body {
 /* ===== FILTER SECTION ===== */
 .filter-section {
     padding: 20px;
-    background: white;
-    border-radius: 8px;
+    background: #000000;
+    border-radius: 0;
+    border: 1px solid #FFFFFF;
     margin: 20px auto;
     max-width: 1200px;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    box-shadow: none;
 }
 
 .filters {
@@ -115,14 +129,15 @@ body {
     align-items: center;
     gap: 8px;
     cursor: pointer;
-    font-weight: 500;
-    color: var(--text-primary);
+    font-weight: 400;
+    color: #ffffff;
 }
 
 .filters input[type="radio"] {
     cursor: pointer;
     width: 18px;
     height: 18px;
+    accent-color: #ffffff;
 }
 
 /* ===== ITEMS GRID ===== */
@@ -141,9 +156,10 @@ body {
 
 /* ===== ITEM CARD ===== */
 .item-card {
-    background: white;
-    border-radius: 12px;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    background: #111111;
+    border-radius: 0;
+    box-shadow: none;
+    border: 1px solid #333333;
     overflow: hidden;
     transition: transform 0.3s ease, box-shadow 0.3s ease;
     cursor: pointer;
@@ -157,12 +173,14 @@ body {
 .item-image {
     width: 100%;
     height: 200px;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: #222222;
+    border-bottom: 1px solid #444444;
+    color: #666666;
+    font-weight: 100;
     display: flex;
     align-items: center;
     justify-content: center;
     font-size: 3rem;
-    color: white;
 }
 
 .item-content {
@@ -171,8 +189,8 @@ body {
 
 .item-title {
     font-size: 1.3rem;
-    font-weight: 700;
-    color: var(--text-primary);
+    font-weight: 300;
+    color: #ffffff;
     margin-bottom: 10px;
     white-space: nowrap;
     overflow: hidden;
@@ -180,7 +198,8 @@ body {
 }
 
 .item-description {
-    color: var(--text-secondary);
+    color: #999999;
+    font-weight: 300;
     margin-bottom: 15px;
     height: 40px;
     overflow: hidden;
@@ -202,7 +221,7 @@ body {
     justify-content: space-between;
     align-items: center;
     padding-top: 15px;
-    border-top: 1px solid var(--border-color);
+    border-top: 1px solid #222222;
 }
 
 .item-bids {

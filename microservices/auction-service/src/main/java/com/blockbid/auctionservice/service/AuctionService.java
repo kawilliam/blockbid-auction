@@ -7,9 +7,12 @@ import com.blockbid.auctionservice.repository.BidRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.client.RestTemplate;
 
 import java.time.LocalDateTime;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 @Service
@@ -20,6 +23,11 @@ public class AuctionService {
     
     @Autowired
     private BidRepository bidRepository;
+    
+    @Autowired
+    private RestTemplate restTemplate;
+    
+    private static final String ITEM_SERVICE_URL = "http://item-service:8082";
     
     // Create new auction
     public Auction createAuction(Auction auction) throws Exception {
@@ -42,7 +50,30 @@ public class AuctionService {
             throw new Exception("Auction already exists for this item");
         }
         
-        return auctionRepository.save(auction);
+        if (auction.getCurrentPrice() == null) {
+            auction.setCurrentPrice(auction.getStartingPrice());
+        }
+        
+        // Initialize other fields
+        if (auction.getStartTime() == null) {
+            auction.setStartTime(LocalDateTime.now());
+        }
+        
+        if (auction.getStatus() == null) {
+            auction.setStatus("ACTIVE");
+        }
+        
+        if (auction.getTotalBids() == null) {
+            auction.setTotalBids(0);
+        }
+        
+        System.out.println("Creating auction - Starting Price: " + auction.getStartingPrice() + ", Current Price: " + auction.getCurrentPrice());
+        
+        Auction savedAuction = auctionRepository.save(auction);
+        
+        System.out.println("Auction saved - ID: " + savedAuction.getId() + ", Current Price: " + savedAuction.getCurrentPrice());
+        
+        return savedAuction;
     }
     
     // Place a bid (UC3 - Core bidding functionality)
@@ -97,6 +128,25 @@ public class AuctionService {
         auction.setWinningBidId(savedBid.getId());
         auction.setTotalBids(auction.getTotalBids() + 1);
         auctionRepository.save(auction);
+        
+        try {
+            Map<String, Object> updateRequest = new HashMap<>();
+            updateRequest.put("price", bidAmount);
+            updateRequest.put("bidderId", bidderId);
+            
+            System.out.println("→ Updating item " + itemId + " with new price: $" + bidAmount);
+            
+            restTemplate.put(
+                ITEM_SERVICE_URL + "/" + itemId + "/bid",
+                updateRequest
+            );
+            
+            System.out.println("✓ Item price updated successfully");
+            
+        } catch (Exception e) {
+            System.err.println("✗ WARNING: Failed to update item price: " + e.getMessage());
+            // Don't fail the bid if item update fails - bid is already saved
+        }
         
         return savedBid;
     }
