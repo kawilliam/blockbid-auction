@@ -44,6 +44,20 @@ window.addEventListener('DOMContentLoaded', () => {
     setupShippingOptions();
 });
 
+// Back button functionality
+window.addEventListener('DOMContentLoaded', () => {
+    const backBtn = document.getElementById('back-btn');
+    const referrer = document.referrer;
+    
+    // Show back button if came from another page on this site
+    if (referrer && referrer.includes(window.location.origin)) {
+        backBtn.style.display = 'inline-block';
+        backBtn.addEventListener('click', () => {
+            window.history.back();
+        });
+    }
+});
+
 // ===== LOAD ORDER DETAILS =====
 async function loadOrderDetails() {
     try {
@@ -99,20 +113,19 @@ function displayOrderSummary(order) {
 async function loadUserAddress() {
     try {
         const response = await fetch(`/api/users/${userId}`, {
-            headers: {
-                'Authorization': `Bearer ${token}`
-            }
+            headers: { 'Authorization': `Bearer ${token}` }
         });
         
         if (response.ok) {
             const user = await response.json();
-            document.getElementById('shipping-address').value = user.address || 'No address on file';
+            document.getElementById('shipping-address').textContent = 
+                `${user.streetNumber} ${user.streetName}, ${user.city}, ${user.province}, ${user.country} ${user.postalCode}`;
         } else {
-            document.getElementById('shipping-address').value = 'Unable to load address';
+            document.getElementById('shipping-address').textContent = 'Address not available';
         }
     } catch (error) {
         console.error('Error loading address:', error);
-        document.getElementById('shipping-address').value = 'Error loading address';
+        document.getElementById('shipping-address').textContent = 'Error loading address';
     }
 }
 

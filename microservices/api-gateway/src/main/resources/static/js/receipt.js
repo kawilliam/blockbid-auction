@@ -29,6 +29,15 @@ function getPaymentIdFromUrl() {
 // ===== PAGE LOAD =====
 window.addEventListener('DOMContentLoaded', () => {
     paymentId = getPaymentIdFromUrl();
+	
+	const urlParams = new URLSearchParams(window.location.search);
+	const itemId = urlParams.get('itemId');
+
+	if (!itemId) {
+	    alert('No item specified');
+	    window.location.href = '/catalogue.html';
+	    return;
+	}
     
     if (!paymentId) {
         // If no paymentId, try to get from localStorage (fallback)
@@ -41,63 +50,97 @@ window.addEventListener('DOMContentLoaded', () => {
         }
     }
     
-    loadReceiptData();
+    loadReceipt();
+});
+
+// Back button functionality
+window.addEventListener('DOMContentLoaded', () => {
+    const backBtn = document.getElementById('back-btn');
+    const referrer = document.referrer;
+    
+    // Show back button if came from another page on this site
+    if (referrer && referrer.includes(window.location.origin)) {
+        backBtn.style.display = 'inline-block';
+        backBtn.addEventListener('click', () => {
+            window.history.back();
+        });
+    }
 });
 
 // ===== LOAD RECEIPT DATA =====
-async function loadReceiptData() {
+async function loadReceipt() {
     try {
-        const response = await fetch(`/api/payments/${paymentId}`, {
-            headers: {
-                'Authorization': `Bearer ${token}`
-            }
+        // Get payment details
+        const paymentResponse = await fetch(`/api/payments/items/${itemId}`, {
+            headers: { 'Authorization': `Bearer ${token}` }
         });
         
-        if (response.ok) {
-            receiptData = await response.json();
-            
-            // Verify this payment belongs to current user
-            if (receiptData.userId != userId) {
-                alert('Access denied: This receipt does not belong to you');
-                window.location.href = '/catalogue.html';
-                return;
-            }
-            
-            displayReceiptData(receiptData);
-        } else if (response.status === 401) {
-            localStorage.clear();
-            window.location.href = '/';
-        } else if (response.status === 404) {
-            showError('Receipt not found');
-        } else {
-            showError('Error loading receipt');
+        if (!paymentResponse.ok) {
+            showError('Payment not found');
+            return;
         }
+        
+        const payment = await paymentResponse.json();
+        
+        // Get item details
+        const itemResponse = await fetch(`/api/items/${itemId}`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        
+        if (!itemResponse.ok) {
+            showError('Item not found');
+            return;
+        }
+        
+        const item = await itemResponse.json();
+        
+        // Get user details
+        const userResponse = await fetch(`/api/users/${userId}`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        
+        const user = userResponse.ok ? await userResponse.json() : null;
+        
+        displayReceipt(payment, item, user);
+        
     } catch (error) {
         console.error('Error loading receipt:', error);
-        showError('Error connecting to server');
+        showError('Error loading receipt: ' + error.message);
     }
 }
 
-// ===== DISPLAY RECEIPT DATA =====
-function displayReceiptData(receipt) {
-    // Order metadata
-    document.getElementById('order-number').textContent = receipt.id || 'N/A';
-    document.getElementById('order-date').textContent = formatDate(receipt.timestamp || new Date());
+function displayReceipt(payment, item, user) {
+    document.getElementById('order-number').textContent = payment.id || 'N/A';
+    document.getElementById('order-date').textContent = new Date(payment.paymentDate).toLocaleDateString();
     
-    // Item details
-    displayItemDetails(receipt.item);
+    document.getElementById('item-name').textContent = item.name;
+    document.getElementById('item-description').textContent = item.description;
+    document.getElementById('item-price').textContent = `$${item.currentPrice.toFixed(2)}`;
     
-    // Payment summary
-    displayPaymentSummary(receipt);
+    const shippingCost = payment.expeditedShipping ? 
+        (item.expeditedShippingCost || 30) : 
+        (item.shippingCost || 15);
     
-    // Shipping information
-    displayShippingInfo(receipt);
+    document.getElementById('shipping-cost').textContent = `$${shippingCost.toFixed(2)}`;
+    document.getElementById('total-amount').textContent = `$${payment.totalAmount.toFixed(2)}`;
     
-    // Payment method info
-    displayPaymentMethodInfo(receipt.paymentDetails);
+    if (user) {
+        document.getElementById('shipping-address').textContent = 
+            `${user.firstName} ${user.lastName}\n${user.streetNumber} ${user.streetName}\n${user.city}, ${user.province} ${user.postalCode}\n${user.country}`;
+    }
     
-    // Update delivery estimate
-    updateDeliveryEstimate(receipt.shippingType);
+    const lastFour = payment.cardNumber ? payment.cardNumber.slice(-4) : '****';
+    document.getElementById('payment-method').textContent = `Card ending in ${lastFour}`;
+}
+
+function showError(message) {
+    document.getElementById('receipt-content').innerHTML = `
+        <div class="error-message">
+            <h3>Error</h3>
+            <p>${message}</p>
+            <button class="btn btn-primary" onclick="location.href='/catalogue.html'">Back to Catalogue</button>
+        </div>
+    `;
 }
 
 // ===== DISPLAY ITEM DETAILS =====
@@ -249,45 +292,9 @@ function escapeHtml(text) {
     return div.innerHTML;
 }
 
-function showError(message) {
-    alert(message);
-    window.location.href = '/catalogue.html';
-}
 
-// ===== MOCK DATA FALLBACK =====
-// If backend doesn't have receipt endpoint yet, use mock data
-function createMockReceiptData() {
-    return {
-        id: Math.floor(Math.random() * 10000),
-        timestamp: new Date().toISOString(),
-        userId: userId,
-        item: {
-            name: 'Sample Auction Item',
-            description: 'This is a sample item for testing the receipt page.',
-            currentPrice: 125.50
-        },
-        shippingType: 'standard',
-        shippingAddress: '123 Main St, Toronto, ON, M1M 1M1',
-        paymentDetails: {
-            cardNumber: '4532 1234 5678 9012',
-            cardholderName: 'John Doe'
-        }
-    };
-}
 
-// ===== FALLBACK FOR MISSING BACKEND ENDPOINT =====
-async function loadReceiptDataWithFallback() {
-    try {
-        // Try to load real data first
-        await loadReceiptData();
-    } catch (error) {
-        console.warn('Receipt endpoint not available, using mock data');
-        
-        // Use mock data for demonstration
-        receiptData = createMockReceiptData();
-        displayReceiptData(receiptData);
-    }
-}
+
 
 // ===== REPLACE loadReceiptData call in DOMContentLoaded =====
 // Comment out the original loadReceiptData() call and use this instead

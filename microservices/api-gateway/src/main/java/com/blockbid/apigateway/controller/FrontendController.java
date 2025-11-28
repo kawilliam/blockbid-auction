@@ -40,6 +40,16 @@ public class FrontendController {
         return "seller";
     }
     
+    @GetMapping("/my-bids.html")
+    public String myBids() {
+        return "my-bids";
+    }
+
+    @GetMapping("/my-listings.html")
+    public String myListings() {
+        return "my-listings";
+    }
+    
     @GetMapping("/health")
     @ResponseBody
     public ResponseEntity<?> healthCheck() {

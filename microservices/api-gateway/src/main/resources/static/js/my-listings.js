@@ -15,13 +15,27 @@ document.getElementById('logout-btn').addEventListener('click', () => {
     window.location.href = '/';
 });
 
+// Back button functionality
+window.addEventListener('DOMContentLoaded', () => {
+    const backBtn = document.getElementById('back-btn');
+    const referrer = document.referrer;
+    
+    // Show back button if came from another page on this site
+    if (referrer && referrer.includes(window.location.origin)) {
+        backBtn.style.display = 'inline-block';
+        backBtn.addEventListener('click', () => {
+            window.history.back();
+        });
+    }
+});
+
 // Load seller's listings
 let allListings = [];
 let currentFilter = 'all';
 
 async function loadMyListings() {
     try {
-        const response = await fetch(`/api/items/seller/${userId}`, {
+        const response = await fetch(`/api/items/sellers/${userId}/items`, {
             headers: {
                 'Authorization': `Bearer ${token}`
             }
@@ -100,7 +114,7 @@ function displayListings(listings) {
         }
 
         return `
-            <div class="listing-card">
+            <div class="listing-card" onclick="location.href='/bidding.html?itemId=${item.id}'" style="cursor: pointer;">
                 <div class="listing-image">
                     <span>ITEM</span>
                 </div>
@@ -125,10 +139,7 @@ function displayListings(listings) {
                     </div>
                     
                     <div class="listing-actions">
-                        <button class="btn btn-sm btn-secondary" onclick="location.href='/bidding.html?itemId=${item.id}'">
-                            View Details
-                        </button>
-                        ${isActive ? '<button class="btn btn-sm btn-outline" onclick="endAuction(' + item.id + ')">End Early</button>' : ''}
+                        ${isActive ? '<button class="btn btn-sm btn-outline" onclick="event.stopPropagation(); endAuction(' + item.id + ')">End Early</button>' : ''}
                     </div>
                 </div>
             </div>

@@ -16,6 +16,20 @@ document.getElementById('logout-btn').addEventListener('click', () => {
     window.location.href = '/';
 });
 
+// Back button functionality
+window.addEventListener('DOMContentLoaded', () => {
+    const backBtn = document.getElementById('back-btn');
+    const referrer = document.referrer;
+    
+    // Show back button if came from another page on this site
+    if (referrer && referrer.includes(window.location.origin)) {
+        backBtn.style.display = 'inline-block';
+        backBtn.addEventListener('click', () => {
+            window.history.back();
+        });
+    }
+});
+
 // ===== GLOBAL VARIABLES =====
 let currentItem = null;
 let highestBid = null;
@@ -59,6 +73,7 @@ async function loadItemDetails() {
         
         if (response.ok) {
             currentItem = await response.json();
+			fetchSellerDetails(currentItem.sellerId);
             displayItemDetails(currentItem);
             setupBiddingSection(currentItem);
             startAuctionTimer(currentItem.endTime);
@@ -106,6 +121,22 @@ function displayItemDetails(item) {
     } else {
         statusBadge.textContent = 'Ended';
         statusBadge.className = 'status-badge ended';
+    }
+}
+
+async function fetchSellerDetails(sellerId) {
+    try {
+        const response = await fetch(`/api/users/${sellerId}`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        
+        if (response.ok) {
+            const seller = await response.json();
+            document.getElementById('seller-name').textContent = 
+                `${seller.firstName} ${seller.lastName}`;
+        }
+    } catch (error) {
+        console.error('Error fetching seller:', error);
     }
 }
 
@@ -325,75 +356,65 @@ async function placeBid(amount) {
 async function loadBidHistory() {
     try {
         const response = await fetch(`/api/auctions/${itemId}/bids`, {
-            headers: {
-                'Authorization': `Bearer ${token}`
-            }
+            headers: { 'Authorization': `Bearer ${token}` }
         });
         
         if (response.ok) {
             const bids = await response.json();
             displayBidHistory(bids);
-        } else {
-            document.getElementById('bid-history').innerHTML = 
-                '<div class="loading">Unable to load bid history</div>';
+            updateHighestBidDisplay(bids);
         }
     } catch (error) {
         console.error('Error loading bid history:', error);
-        document.getElementById('bid-history').innerHTML = 
-            '<div class="loading">Error loading bid history</div>';
     }
 }
 
-// ===== DISPLAY BID HISTORY =====
 function displayBidHistory(bids) {
-    const historyContainer = document.getElementById('bid-history');
+    const container = document.getElementById('bid-history-container');
+    const noBids = document.getElementById('no-bids');
     
     if (!bids || bids.length === 0) {
-        historyContainer.innerHTML = '<div class="loading">No bids placed yet</div>';
+        container.style.display = 'none';
+        noBids.style.display = 'block';
         return;
     }
     
-    // Remove duplicates based on bid ID
-    const uniqueBids = [];
-    const seenIds = new Set();
+    container.style.display = 'block';
+    noBids.style.display = 'none';
     
-    for (const bid of bids) {
-        if (!seenIds.has(bid.id)) {
-            seenIds.add(bid.id);
-            uniqueBids.push(bid);
-        }
+    container.innerHTML = bids.map((bid, index) => `
+        <div class="bid-item ${index === 0 ? 'highest-bid' : ''}">
+            <div class="bid-info">
+                <span class="bid-bidder">${bid.bidderName || 'Unknown'}</span>
+                <span class="bid-amount">$${bid.amount.toFixed(2)}</span>
+            </div>
+            <div class="bid-time">${formatBidTime(bid.bidTime)}</div>
+            ${index === 0 ? '<span class="highest-badge">Highest Bid</span>' : ''}
+        </div>
+    `).join('');
+}
+
+function updateHighestBidDisplay(bids) {
+    const highestBidSection = document.getElementById('highest-bid-section');
+    
+    if (!bids || bids.length === 0) {
+        highestBidSection.innerHTML = '<p>No bids yet</p>';
+        return;
     }
     
-    // Sort by amount (highest first), then by time (newest first)
-    uniqueBids.sort((a, b) => {
-        if (b.amount !== a.amount) {
-            return b.amount - a.amount;
-        }
-        // Compare timestamps
-        const timeA = Array.isArray(a.bidTime) ? new Date(a.bidTime[0], a.bidTime[1]-1, a.bidTime[2], a.bidTime[3], a.bidTime[4], a.bidTime[5]).getTime() : 0;
-        const timeB = Array.isArray(b.bidTime) ? new Date(b.bidTime[0], b.bidTime[1]-1, b.bidTime[2], b.bidTime[3], b.bidTime[4], b.bidTime[5]).getTime() : 0;
-        return timeB - timeA;
-    });
-    
-    const historyHtml = uniqueBids.map(bid => {
-        // Format the bid time
-        const timeDisplay = formatBidTime(bid.bidTime);
-        
-        // Get bidder name
-        const bidderDisplay = bid.bidderName || `User #${bid.bidderId}`;
-        
-        return `
-            <div class="bid-entry">
-                <div class="bid-info">
-                    <div class="bid-amount">$${bid.amount.toFixed(2)}</div>
-                    <div class="bid-user">by ${bidderDisplay}</div>
-                </div>
-                <div class="bid-time">${timeDisplay}</div>
-            </div>
-        `;
-    }).join('');
-    
-    historyContainer.innerHTML = historyHtml;
+    const highest = bids[0];
+    highestBidSection.innerHTML = `
+        <div class="highest-bid-info">
+            <div><strong>Highest Bidder:</strong> ${highest.bidderName || 'Unknown'}</div>
+            <div><strong>Bid Amount:</strong> $${highest.amount.toFixed(2)}</div>
+            <div><strong>Time:</strong> ${formatBidTime(highest.bidTime)}</div>
+        </div>
+    `;
+}
+
+function formatBidTime(bidTime) {
+    const date = new Date(bidTime);
+    return date.toLocaleString();
 }
 
 // ===== AUCTION TIMER =====

@@ -197,6 +197,21 @@ public class AuctionService {
             }
         }
         
+        try {
+            System.out.println("→ Ending auction for item " + itemId);
+            
+            restTemplate.put(
+                ITEM_SERVICE_URL + "/" + itemId + "/end",
+                null
+            );
+            
+            System.out.println("✓ Item status updated to ENDED");
+            
+        } catch (Exception e) {
+            System.err.println("✗ WARNING: Failed to update item status: " + e.getMessage());
+            // Continue anyway - auction is already marked as ended
+        }
+        
         return auctionRepository.save(auction);
     }
     

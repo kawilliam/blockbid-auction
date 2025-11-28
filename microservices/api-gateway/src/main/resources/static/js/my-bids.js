@@ -15,6 +15,20 @@ document.getElementById('logout-btn').addEventListener('click', () => {
     window.location.href = '/';
 });
 
+// Back button functionality
+window.addEventListener('DOMContentLoaded', () => {
+    const backBtn = document.getElementById('back-btn');
+    const referrer = document.referrer;
+    
+    // Show back button if came from another page on this site
+    if (referrer && referrer.includes(window.location.origin)) {
+        backBtn.style.display = 'inline-block';
+        backBtn.addEventListener('click', () => {
+            window.history.back();
+        });
+    }
+});
+
 // Load user's bids
 let allBids = [];
 let currentFilter = 'all';
@@ -22,13 +36,22 @@ let currentFilter = 'all';
 async function loadMyBids() {
     try {
         const response = await fetch(`/api/auctions/users/${userId}/bids`, {
-            headers: {
-                'Authorization': `Bearer ${token}`
-            }
+            headers: { 'Authorization': `Bearer ${token}` }
         });
 
         if (response.ok) {
-            allBids = await response.json();
+            let bids = await response.json();
+            
+            // Remove duplicate bids - keep only the highest bid per item
+            const bidsByItem = new Map();
+            bids.forEach(bid => {
+                const existing = bidsByItem.get(bid.itemId);
+                if (!existing || bid.amount > existing.amount) {
+                    bidsByItem.set(bid.itemId, bid);
+                }
+            });
+            
+            allBids = Array.from(bidsByItem.values());
             
             // Fetch item details for each bid
             const bidsWithItems = await Promise.all(allBids.map(async (bid) => {
@@ -37,7 +60,15 @@ async function loadMyBids() {
                         headers: { 'Authorization': `Bearer ${token}` }
                     });
                     if (itemResponse.ok) {
-                        bid.item = await itemResponse.json();
+                        const item = await itemResponse.json();
+                        bid.item = item;
+                        
+                        // Determine actual status
+                        if (item.status === 'ENDED') {
+                            bid.displayStatus = (item.highestBidderId === parseInt(userId)) ? 'WON' : 'LOST';
+                        } else {
+                            bid.displayStatus = (item.highestBidderId === parseInt(userId)) ? 'WINNING' : 'OUTBID';
+                        }
                     }
                 } catch (e) {
                     console.error('Error loading item:', e);
@@ -46,6 +77,7 @@ async function loadMyBids() {
             }));
 
             allBids = bidsWithItems;
+            updateStats(allBids);
             displayBids(allBids);
         } else {
             showNoBids();
@@ -55,6 +87,8 @@ async function loadMyBids() {
         showNoBids();
     }
 }
+
+
 
 function displayBids(bids) {
     const container = document.getElementById('bids-container');
@@ -66,33 +100,49 @@ function displayBids(bids) {
         return;
     }
 
-    container.style.display = 'flex';
+    container.style.display = 'grid';
     noBidsDiv.style.display = 'none';
 
     container.innerHTML = bids.map(bid => {
-        const item = bid.item || {};
-        const isWinning = bid.status === 'WINNING';
-        const isOutbid = bid.status === 'OUTBID';
-        const isActive = item.status === 'ACTIVE';
+        const item = bid.item;
+        if (!item) return '';
+        
+        const isWon = bid.displayStatus === 'WON';
+        
+        let statusClass = 'status-outbid';
+        if (isWon) statusClass = 'status-won';
+        else if (bid.displayStatus === 'WINNING') statusClass = 'status-winning';
         
         return `
-            <div class="bid-card">
-                <div class="bid-item-info">
-                    <div class="bid-item-name">${item.name || 'Loading...'}</div>
-                    <div class="bid-details">
-                        Your bid: $${bid.amount.toFixed(2)} • 
-                        Current price: $${item.currentPrice?.toFixed(2) || 'N/A'} •
-                        ${isActive ? 'Active' : 'Ended'}
-                    </div>
+            <div class="bid-card" onclick="location.href='/bidding.html?itemId=${item.id}'" style="cursor: pointer;">
+                <div class="bid-image">
+                    <span>ITEM</span>
                 </div>
-                <div class="bid-status">
-                    <div class="bid-amount">$${bid.amount.toFixed(2)}</div>
-                    <span class="status-badge status-${bid.status.toLowerCase()}">${bid.status}</span>
+                <div class="bid-content">
+                    <span class="bid-status-badge ${statusClass}">${bid.displayStatus}</span>
+                    <h3 class="bid-title">${item.name}</h3>
+                    <p class="bid-description">${item.description}</p>
+                    
+                    <div class="bid-stats">
+                        <div class="bid-stat">
+                            <div class="bid-stat-label">Your Bid</div>
+                            <div class="bid-stat-value">$${bid.amount.toFixed(2)}</div>
+                        </div>
+                        <div class="bid-stat">
+                            <div class="bid-stat-label">Current Price</div>
+                            <div class="bid-stat-value">$${item.currentPrice.toFixed(2)}</div>
+                        </div>
+                        <div class="bid-stat">
+                            <div class="bid-stat-label">Status</div>
+                            <div class="bid-stat-value">${item.status}</div>
+                        </div>
+                    </div>
+                    
                     <div class="bid-actions">
-                        <button class="btn btn-sm btn-secondary" onclick="location.href='/bidding.html?itemId=${bid.itemId}'">
-                            View Auction
-                        </button>
-                        ${isWinning && !isActive ? '<button class="btn btn-sm btn-primary" onclick="location.href=\'/payment.html?itemId=' + bid.itemId + '\'">Pay Now</button>' : ''}
+                        ${isWon ? 
+                            '<button class="btn btn-sm btn-primary" onclick="event.stopPropagation(); location.href=\'/payment.html?itemId=' + item.id + '\'">Pay Now</button>' :
+                            ''
+                        }
                     </div>
                 </div>
             </div>
@@ -114,12 +164,18 @@ document.querySelectorAll('.filter-btn').forEach(btn => {
         const filter = btn.dataset.filter;
         currentFilter = filter;
         
-        if (filter === 'all') {
-            displayBids(allBids);
-        } else {
-            const filtered = allBids.filter(bid => bid.status.toLowerCase() === filter);
-            displayBids(filtered);
+        let filtered = allBids;
+        if (filter === 'winning') {
+            filtered = allBids.filter(b => b.displayStatus === 'WINNING');
+        } else if (filter === 'outbid') {
+            filtered = allBids.filter(b => b.displayStatus === 'OUTBID');
+        } else if (filter === 'won') {
+            filtered = allBids.filter(b => b.displayStatus === 'WON');
+        } else if (filter === 'lost') {
+            filtered = allBids.filter(b => b.displayStatus === 'LOST');
         }
+        
+        displayBids(filtered);
     });
 });
 

@@ -17,9 +17,25 @@ document.getElementById('logout-btn').addEventListener('click', () => {
     window.location.href = '/';
 });
 
+// Back button functionality
+window.addEventListener('DOMContentLoaded', () => {
+    const backBtn = document.getElementById('back-btn');
+    const referrer = document.referrer;
+    
+    // Show back button if came from another page on this site
+    if (referrer && referrer.includes(window.location.origin)) {
+        backBtn.style.display = 'inline-block';
+        backBtn.addEventListener('click', () => {
+            window.history.back();
+        });
+    }
+});
+
 // ===== GLOBAL VARIABLES =====
 let allItems = [];
 let currentFilter = 'all';
+let currentCategory = 'all';
+let currentSort = 'newest';
 
 // ===== SEARCH VALIDATION =====
 function validateSearchKeyword(keyword) {
@@ -125,6 +141,18 @@ document.querySelectorAll('input[name="status"]').forEach(radio => {
     });
 });
 
+// Category filter
+document.getElementById('category-filter').addEventListener('change', (e) => {
+    currentCategory = e.target.value;
+    filterItems();
+});
+
+// Sort dropdown
+document.getElementById('sort-by').addEventListener('change', (e) => {
+    currentSort = e.target.value;
+    filterItems();
+});
+
 // ===== LOAD ALL ITEMS =====
 async function loadItems() {
     showLoading(true);
@@ -159,7 +187,7 @@ async function searchItems(keyword) {
     showLoading(true);
     
     try {
-        const response = await fetch(`/api/items/search?keyword=${encodeURIComponent(keyword)}`, {
+        const response = await fetch(`/api/items?keyword=${encodeURIComponent(keyword)}`, {
             headers: {
                 'Authorization': `Bearer ${token}`
             }
@@ -183,18 +211,42 @@ async function searchItems(keyword) {
 function filterItems() {
     let filteredItems = allItems;
     
+    // Filter by status
     if (currentFilter === 'active') {
-        filteredItems = allItems.filter(item => item.status === 'ACTIVE');
+        filteredItems = filteredItems.filter(item => item.status === 'ACTIVE');
     } else if (currentFilter === 'ending-soon') {
-        // Items ending within 24 hours
         const oneDayFromNow = new Date(Date.now() + 24 * 60 * 60 * 1000);
-        filteredItems = allItems.filter(item => {
+        filteredItems = filteredItems.filter(item => {
             const endTime = new Date(item.endTime);
             return item.status === 'ACTIVE' && endTime <= oneDayFromNow;
         });
     }
     
+    // Filter by category
+    if (currentCategory !== 'all') {
+        filteredItems = filteredItems.filter(item => item.category === currentCategory);
+    }
+    
+    // Sort items
+    filteredItems = sortItems(filteredItems, currentSort);
+    
     displayItems(filteredItems);
+}
+
+function sortItems(items, sortBy) {
+    const sorted = [...items];
+    
+    switch(sortBy) {
+        case 'price-low':
+            return sorted.sort((a, b) => a.currentPrice - b.currentPrice);
+        case 'price-high':
+            return sorted.sort((a, b) => b.currentPrice - a.currentPrice);
+        case 'ending':
+            return sorted.sort((a, b) => new Date(a.endTime) - new Date(b.endTime));
+        case 'newest':
+        default:
+            return sorted.sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0));
+    }
 }
 
 // ===== DISPLAY ITEMS =====
@@ -221,9 +273,8 @@ function displayItems(items) {
 
 // ===== CREATE ITEM CARD HTML =====
 function createItemCard(item) {
-    const timeRemaining = getTimeRemaining(item.endTime);
-    const statusClass = getStatusClass(item.status, timeRemaining);
-    const statusText = getStatusText(item.status, timeRemaining);
+    const statusClass = getStatusClass(item.status, item.endTime);
+    const statusText = getStatusText(item.status, item.endTime);
     
     return `
         <div class="item-card" onclick="viewItem(${item.id})">
@@ -240,7 +291,7 @@ function createItemCard(item) {
                 </div>
                 ${item.status === 'ACTIVE' ? `
                     <div class="item-timer" id="timer-${item.id}">
-                        Time: ${timeRemaining}
+                        Time: ${getTimeRemaining(item.endTime)}
                     </div>
                 ` : ''}
                 <div class="item-actions">
@@ -298,19 +349,25 @@ function getTimeRemaining(endTime) {
     return `${hours}h ${minutes}m`;
 }
 
-function getStatusClass(status, timeRemaining) {
+function getStatusClass(status, itemEndTime) {
     if (status !== 'ACTIVE') return 'status-ended';
     
-    const hours = parseInt(timeRemaining);
-    if (hours <= 24) return 'status-ending';
+    const now = new Date().getTime();
+    const end = new Date(itemEndTime).getTime();
+    const hoursRemaining = (end - now) / (1000 * 60 * 60);
+    
+    if (hoursRemaining <= 24 && hoursRemaining > 0) return 'status-ending';
     return 'status-active';
 }
 
-function getStatusText(status, timeRemaining) {
+function getStatusText(status, itemEndTime) {
     if (status !== 'ACTIVE') return 'Ended';
     
-    const hours = parseInt(timeRemaining);
-    if (hours <= 24) return 'Ending Soon';
+    const now = new Date().getTime();
+    const end = new Date(itemEndTime).getTime();
+    const hoursRemaining = (end - now) / (1000 * 60 * 60);
+    
+    if (hoursRemaining <= 24 && hoursRemaining > 0) return 'Ending Soon';
     return 'Active';
 }
 
