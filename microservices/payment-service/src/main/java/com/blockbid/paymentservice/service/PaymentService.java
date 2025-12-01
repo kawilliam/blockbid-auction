@@ -7,6 +7,7 @@ import com.blockbid.paymentservice.repository.PaymentRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.client.RestTemplate;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -21,6 +22,9 @@ public class PaymentService {
     
     @Autowired
     private OrderRepository orderRepository;
+    
+    @Autowired
+    private RestTemplate restTemplate;
     
     // Process payment (UC5 - Payment functionality)
     @Transactional
@@ -198,10 +202,10 @@ public class PaymentService {
         if (paymentOptional.isEmpty()) {
             throw new Exception("Payment not found");
         }
-        
+
         Payment payment = paymentOptional.get();
         Optional<Order> orderOptional = orderRepository.findByPaymentId(paymentId);
-        
+
         // Build receipt data
         Map<String, Object> receipt = new java.util.HashMap<>();
         receipt.put("id", payment.getId());
@@ -214,14 +218,17 @@ public class PaymentService {
         receipt.put("shippingAddress", payment.getShippingAddress());
         receipt.put("status", payment.getStatus());
         receipt.put("timestamp", payment.getCreatedAt());
-        
+        receipt.put("paymentDate", payment.getCreatedAt());
+        receipt.put("cardNumber", payment.getCardLastFour()); // For displaying last 4 digits
+        receipt.put("expeditedShipping", "expedited".equals(payment.getShippingType()));
+
         // Payment method info (masked)
         Map<String, Object> paymentMethod = new java.util.HashMap<>();
         paymentMethod.put("cardLastFour", payment.getCardLastFour());
         paymentMethod.put("cardholderName", payment.getCardholderName());
         paymentMethod.put("paymentMethod", payment.getPaymentMethod());
         receipt.put("paymentDetails", paymentMethod);
-        
+
         // Order info
         if (orderOptional.isPresent()) {
             Order order = orderOptional.get();
@@ -232,14 +239,51 @@ public class PaymentService {
             orderInfo.put("trackingNumber", order.getTrackingNumber());
             receipt.put("order", orderInfo);
         }
+
+        // Fetch REAL item details from Item Service
+        try {
+            String itemServiceUrl = "http://item-service:8082/items/" + payment.getItemId();
+            System.out.println("Fetching item from: " + itemServiceUrl);
+            
+            Map<String, Object> item = restTemplate.getForObject(itemServiceUrl, Map.class);
+            
+            if (item != null) {
+                receipt.put("item", item);
+            } else {
+                // Fallback if item service fails
+                Map<String, Object> fallbackItem = new java.util.HashMap<>();
+                fallbackItem.put("id", payment.getItemId());
+                fallbackItem.put("name", "Auction Item #" + payment.getItemId());
+                fallbackItem.put("description", "Item details unavailable");
+                fallbackItem.put("currentPrice", payment.getItemPrice());
+                receipt.put("item", fallbackItem);
+            }
+        } catch (Exception e) {
+            System.err.println("Error fetching item from Item Service: " + e.getMessage());
+            e.printStackTrace();
+            
+            // Fallback item
+            Map<String, Object> fallbackItem = new java.util.HashMap<>();
+            fallbackItem.put("id", payment.getItemId());
+            fallbackItem.put("name", "Auction Item #" + payment.getItemId());
+            fallbackItem.put("description", "Item details unavailable");
+            fallbackItem.put("currentPrice", payment.getItemPrice());
+            receipt.put("item", fallbackItem);
+        }
         
-        // Item info (placeholder - would normally fetch from Item Service)
-        Map<String, Object> item = new java.util.HashMap<>();
-        item.put("name", "Auction Item #" + payment.getItemId());
-        item.put("description", "Item purchased through auction");
-        item.put("currentPrice", payment.getItemPrice());
-        receipt.put("item", item);
-        
+        // Fetch user details from User Service
+        try {
+            String userServiceUrl = "http://user-service:8081/users/" + payment.getUserId();
+            System.out.println("Fetching user from: " + userServiceUrl);
+            
+            Map<String, Object> user = restTemplate.getForObject(userServiceUrl, Map.class);
+            if (user != null) {
+                receipt.put("user", user);
+            }
+        } catch (Exception e) {
+            System.err.println("Error fetching user from User Service: " + e.getMessage());
+        }
+
         return receipt;
     }
     

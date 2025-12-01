@@ -158,7 +158,12 @@ public class AuctionService {
     
     // Get bid history for an item
     public List<Bid> getBidHistory(Long itemId) {
-        return bidRepository.findByItemIdOrderByBidTimeDesc(itemId);
+    	List<Bid> bids = bidRepository.findByItemIdOrderByBidTimeDesc(itemId);
+        
+        // Sort by amount descending (highest bid first)
+        bids.sort((b1, b2) -> Double.compare(b2.getAmount(), b1.getAmount()));
+        
+        return bids;
     }
     
     // Get highest bid for an item

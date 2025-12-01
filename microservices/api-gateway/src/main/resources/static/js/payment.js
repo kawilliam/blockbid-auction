@@ -44,19 +44,6 @@ window.addEventListener('DOMContentLoaded', () => {
     setupShippingOptions();
 });
 
-// Back button functionality
-window.addEventListener('DOMContentLoaded', () => {
-    const backBtn = document.getElementById('back-btn');
-    const referrer = document.referrer;
-    
-    // Show back button if came from another page on this site
-    if (referrer && referrer.includes(window.location.origin)) {
-        backBtn.style.display = 'inline-block';
-        backBtn.addEventListener('click', () => {
-            window.history.back();
-        });
-    }
-});
 
 // ===== LOAD ORDER DETAILS =====
 async function loadOrderDetails() {
@@ -298,7 +285,7 @@ async function processPayment() {
             
             // Redirect to receipt page
             setTimeout(() => {
-                window.location.href = `/receipt.html?paymentId=${result.paymentId}`;
+                window.location.href = `/receipt.html?itemId=${itemId}&paymentId=${result.paymentId}`;
             }, 2000);
         } else {
             showPaymentMessage(result.message || 'Payment failed', 'error');

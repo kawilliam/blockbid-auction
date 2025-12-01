@@ -15,19 +15,6 @@ document.getElementById('logout-btn').addEventListener('click', () => {
     window.location.href = '/';
 });
 
-// Back button functionality
-window.addEventListener('DOMContentLoaded', () => {
-    const backBtn = document.getElementById('back-btn');
-    const referrer = document.referrer;
-    
-    // Show back button if came from another page on this site
-    if (referrer && referrer.includes(window.location.origin)) {
-        backBtn.style.display = 'inline-block';
-        backBtn.addEventListener('click', () => {
-            window.history.back();
-        });
-    }
-});
 
 // Load seller's listings
 let allListings = [];

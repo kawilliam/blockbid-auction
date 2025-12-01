@@ -19,6 +19,7 @@ document.getElementById('logout-btn').addEventListener('click', () => {
 // ===== GLOBAL VARIABLES =====
 let paymentId = null;
 let receiptData = null;
+let itemId = null;
 
 // ===== GET PAYMENT ID FROM URL =====
 function getPaymentIdFromUrl() {
@@ -69,39 +70,25 @@ window.addEventListener('DOMContentLoaded', () => {
 
 // ===== LOAD RECEIPT DATA =====
 async function loadReceipt() {
+    const urlParams = new URLSearchParams(window.location.search);
+    const paymentId = urlParams.get('paymentId');
+    
+    if (!paymentId) {
+        showError('No payment information found');
+        return;
+    }
+    
     try {
-        // Get payment details
-        const paymentResponse = await fetch(`/api/payments/items/${itemId}`, {
+        const receiptResponse = await fetch(`/api/payments/${paymentId}/receipt`, {
             headers: { 'Authorization': `Bearer ${token}` }
         });
         
-        if (!paymentResponse.ok) {
-            showError('Payment not found');
-            return;
+        if (receiptResponse.ok) {
+            const receiptData = await receiptResponse.json();
+            displayReceipt(receiptData);
+        } else {
+            showError('Payment receipt not found');
         }
-        
-        const payment = await paymentResponse.json();
-        
-        // Get item details
-        const itemResponse = await fetch(`/api/items/${itemId}`, {
-            headers: { 'Authorization': `Bearer ${token}` }
-        });
-        
-        if (!itemResponse.ok) {
-            showError('Item not found');
-            return;
-        }
-        
-        const item = await itemResponse.json();
-        
-        // Get user details
-        const userResponse = await fetch(`/api/users/${userId}`, {
-            headers: { 'Authorization': `Bearer ${token}` }
-        });
-        
-        const user = userResponse.ok ? await userResponse.json() : null;
-        
-        displayReceipt(payment, item, user);
         
     } catch (error) {
         console.error('Error loading receipt:', error);
@@ -109,28 +96,87 @@ async function loadReceipt() {
     }
 }
 
-function displayReceipt(payment, item, user) {
-    document.getElementById('order-number').textContent = payment.id || 'N/A';
-    document.getElementById('order-date').textContent = new Date(payment.paymentDate).toLocaleDateString();
+function displayReceipt(receiptData) {
+    console.log('Receipt data:', receiptData); // Debug
     
-    document.getElementById('item-name').textContent = item.name;
-    document.getElementById('item-description').textContent = item.description;
-    document.getElementById('item-price').textContent = `$${item.currentPrice.toFixed(2)}`;
+    // Order details
+    document.getElementById('order-number').textContent = receiptData.id || 'N/A';
+    document.getElementById('order-date').textContent = new Date(receiptData.timestamp || receiptData.paymentDate).toLocaleDateString();
     
-    const shippingCost = payment.expeditedShipping ? 
-        (item.expeditedShippingCost || 30) : 
-        (item.shippingCost || 15);
+    // Item details - populate the receipt-item container
+    const receiptItem = document.getElementById('receipt-item');
+    const itemName = receiptData.item?.name || 'Item details unavailable';
+    const itemDescription = receiptData.item?.description || '';
+    const itemPrice = receiptData.itemPrice || receiptData.item?.currentPrice || 0;
     
-    document.getElementById('shipping-cost').textContent = `$${shippingCost.toFixed(2)}`;
-    document.getElementById('total-amount').textContent = `$${payment.totalAmount.toFixed(2)}`;
+    receiptItem.innerHTML = `
+        <div class="item-details">
+            <div class="item-image-receipt">
+                <span>ITEM</span>
+            </div>
+            <div class="item-info-receipt">
+                <div class="item-name-receipt">${escapeHtml(itemName)}</div>
+                <div class="item-description-receipt">${escapeHtml(itemDescription)}</div>
+                <div class="item-price-receipt">$${itemPrice.toFixed(2)}</div>
+            </div>
+        </div>
+    `;
     
-    if (user) {
-        document.getElementById('shipping-address').textContent = 
-            `${user.firstName} ${user.lastName}\n${user.streetNumber} ${user.streetName}\n${user.city}, ${user.province} ${user.postalCode}\n${user.country}`;
+    // Payment summary - populate the payment-summary container
+    const paymentSummary = document.getElementById('payment-summary');
+    const shippingCost = receiptData.shippingCost || 0;
+    const totalAmount = receiptData.totalAmount || 0;
+    
+    paymentSummary.innerHTML = `
+        <h3>Payment Summary</h3>
+        <div class="summary-row subtotal">
+            <span>Item Price:</span>
+            <span>$${itemPrice.toFixed(2)}</span>
+        </div>
+        <div class="summary-row shipping">
+            <span>Shipping:</span>
+            <span>${shippingCost === 0 ? 'Free' : '$' + shippingCost.toFixed(2)}</span>
+        </div>
+        <div class="summary-row total">
+            <span>Total Paid:</span>
+            <span>$${totalAmount.toFixed(2)}</span>
+        </div>
+    `;
+    
+    // Shipping address
+    if (receiptData.shippingAddress) {
+        document.getElementById('shipping-address').textContent = receiptData.shippingAddress;
+    } else if (receiptData.user) {
+        const user = receiptData.user;
+        const addressText = `${user.firstName || ''} ${user.lastName || ''}\n${user.streetNumber || ''} ${user.streetName || ''}\n${user.city || ''}, ${user.province || ''} ${user.postalCode || ''}\n${user.country || ''}`;
+        document.getElementById('shipping-address').textContent = addressText;
     }
     
-    const lastFour = payment.cardNumber ? payment.cardNumber.slice(-4) : '****';
-    document.getElementById('payment-method').textContent = `Card ending in ${lastFour}`;
+    // Shipping method
+    const shippingType = receiptData.shippingType || 'standard';
+    const isExpedited = shippingType === 'expedited';
+    document.getElementById('shipping-method').textContent = isExpedited ? 
+        'Expedited Shipping (2-3 business days)' : 
+        'Standard Shipping (5-7 business days)';
+    
+    // Estimated delivery
+    const days = isExpedited ? 3 : 7;
+    document.getElementById('estimated-delivery').textContent = `Estimated delivery in ${days} business days`;
+    document.getElementById('delivery-estimate').textContent = `Estimated delivery in ${days} business days`;
+    
+    // Payment method
+    const cardLastFour = receiptData.cardLastFour || receiptData.cardNumber || '****';
+    document.getElementById('card-info').textContent = `Card ending in ${cardLastFour}`;
+    
+    // Transaction ID
+    const transactionId = receiptData.transactionId || `TXN${receiptData.id}`;
+    document.getElementById('transaction-id').textContent = `Transaction ID: ${transactionId}`;
+}
+
+function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
 }
 
 function showError(message) {

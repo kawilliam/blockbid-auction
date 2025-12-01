@@ -157,7 +157,7 @@ body {
 
 .tab.active {
     background: var(--primary-color);
-    color: white;
+    color: black;
 }
 
 .tab:hover:not(.active) {

@@ -35,6 +35,7 @@ let currentItem = null;
 let highestBid = null;
 let itemId = null;
 let auctionTimer = null;
+let isSubmittingBid = false;
 
 // ===== GET ITEM ID FROM URL =====
 function getItemIdFromUrl() {
@@ -73,6 +74,8 @@ async function loadItemDetails() {
         
         if (response.ok) {
             currentItem = await response.json();
+			console.log('Current item:', currentItem); // DEBUG - check if sellerId exists
+			console.log('Seller ID:', currentItem.sellerId); // DEBUG
 			fetchSellerDetails(currentItem.sellerId);
             displayItemDetails(currentItem);
             setupBiddingSection(currentItem);
@@ -125,18 +128,44 @@ function displayItemDetails(item) {
 }
 
 async function fetchSellerDetails(sellerId) {
+    console.log('Fetching seller details for ID:', sellerId); // DEBUG
+    
+    if (!sellerId) {
+        console.error('No seller ID provided');
+        document.getElementById('seller-name').textContent = 'Unknown Seller';
+        return;
+    }
+    
     try {
-        const response = await fetch(`/api/users/${sellerId}`, {
+        const url = `/api/users/${sellerId}`;
+        console.log('Fetching from:', url); // DEBUG
+        
+        const response = await fetch(url, {
             headers: { 'Authorization': `Bearer ${token}` }
         });
         
+        console.log('Response status:', response.status); // DEBUG
+        
         if (response.ok) {
             const seller = await response.json();
-            document.getElementById('seller-name').textContent = 
-                `${seller.firstName} ${seller.lastName}`;
+            console.log('Seller data:', seller); // DEBUG
+            
+            const sellerNameElement = document.getElementById('seller-name');
+            if (sellerNameElement) {
+                sellerNameElement.textContent = `${seller.firstName} ${seller.lastName}`;
+                console.log('Seller name set to:', `${seller.firstName} ${seller.lastName}`); // DEBUG
+            } else {
+                console.error('seller-name element not found in DOM');
+            }
+        } else {
+            console.error('Failed to fetch seller:', response.status, response.statusText);
+            const errorText = await response.text();
+            console.error('Error response:', errorText);
+            document.getElementById('seller-name').textContent = 'Unknown Seller';
         }
     } catch (error) {
         console.error('Error fetching seller:', error);
+        document.getElementById('seller-name').textContent = 'Unknown Seller';
     }
 }
 
@@ -276,6 +305,8 @@ function clearBidFieldError() {
 
 // ===== PLACE BID =====
 async function placeBid(amount) {
+	if (isSubmittingBid) return;
+	
     const placeBidBtn = document.getElementById('place-bid-btn');
     
     // Additional validation
@@ -290,6 +321,7 @@ async function placeBid(amount) {
     }
     
     try {
+		isSubmittingBid = true;
         placeBidBtn.disabled = true;
         placeBidBtn.textContent = 'Placing Bid...';
         
@@ -347,6 +379,7 @@ async function placeBid(amount) {
         console.error('Error placing bid:', error);
         showBidMessage('Error connecting to server. Please try again.', 'error');
     } finally {
+		isSubmittingBid = false;
         placeBidBtn.disabled = false;
         placeBidBtn.textContent = 'Place Bid';
     }
@@ -370,18 +403,13 @@ async function loadBidHistory() {
 }
 
 function displayBidHistory(bids) {
-    const container = document.getElementById('bid-history-container');
-    const noBids = document.getElementById('no-bids');
-    
+    const container = document.getElementById('bid-history');
+
     if (!bids || bids.length === 0) {
-        container.style.display = 'none';
-        noBids.style.display = 'block';
+        container.innerHTML = '<div class="no-bids">No bids yet</div>';
         return;
     }
-    
-    container.style.display = 'block';
-    noBids.style.display = 'none';
-    
+
     container.innerHTML = bids.map((bid, index) => `
         <div class="bid-item ${index === 0 ? 'highest-bid' : ''}">
             <div class="bid-info">
@@ -395,21 +423,13 @@ function displayBidHistory(bids) {
 }
 
 function updateHighestBidDisplay(bids) {
-    const highestBidSection = document.getElementById('highest-bid-section');
-    
-    if (!bids || bids.length === 0) {
-        highestBidSection.innerHTML = '<p>No bids yet</p>';
-        return;
-    }
-    
-    const highest = bids[0];
-    highestBidSection.innerHTML = `
-        <div class="highest-bid-info">
-            <div><strong>Highest Bidder:</strong> ${highest.bidderName || 'Unknown'}</div>
-            <div><strong>Bid Amount:</strong> $${highest.amount.toFixed(2)}</div>
-            <div><strong>Time:</strong> ${formatBidTime(highest.bidTime)}</div>
-        </div>
-    `;
+	if (!bids || bids.length === 0) {
+	        document.getElementById('highest-bidder').textContent = 'No bids yet';
+	        return;
+	    }
+	    
+	    const highest = bids[0];
+	    document.getElementById('highest-bidder').textContent = highest.bidderName || 'Unknown';
 }
 
 function formatBidTime(bidTime) {

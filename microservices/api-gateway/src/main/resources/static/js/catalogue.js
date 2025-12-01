@@ -17,19 +17,6 @@ document.getElementById('logout-btn').addEventListener('click', () => {
     window.location.href = '/';
 });
 
-// Back button functionality
-window.addEventListener('DOMContentLoaded', () => {
-    const backBtn = document.getElementById('back-btn');
-    const referrer = document.referrer;
-    
-    // Show back button if came from another page on this site
-    if (referrer && referrer.includes(window.location.origin)) {
-        backBtn.style.display = 'inline-block';
-        backBtn.addEventListener('click', () => {
-            window.history.back();
-        });
-    }
-});
 
 // ===== GLOBAL VARIABLES =====
 let allItems = [];
@@ -100,20 +87,30 @@ window.addEventListener('DOMContentLoaded', () => {
 
 // ===== SEARCH FUNCTIONALITY =====
 document.getElementById('search-btn').addEventListener('click', () => {
+    console.log('=== SEARCH BUTTON CLICKED ===');
     clearSearchError();
+    
     const keyword = document.getElementById('search-input').value.trim();
+    console.log('Raw input value:', document.getElementById('search-input').value);
+    console.log('Trimmed keyword:', keyword);
+    console.log('Keyword length:', keyword.length);
     
     if (!keyword) {
-        loadItems(); // Show all items if search is empty
+        console.log('Empty search - loading all items');
+        loadItems();
         return;
     }
     
     const validation = validateSearchKeyword(keyword);
+    console.log('Validation result:', validation);
+    
     if (!validation.valid) {
+        console.log('Validation failed:', validation.error);
         showSearchError(validation.error);
         return;
     }
     
+    console.log('Starting search with keyword:', keyword);
     searchItems(keyword);
 });
 
@@ -155,55 +152,94 @@ document.getElementById('sort-by').addEventListener('change', (e) => {
 
 // ===== LOAD ALL ITEMS =====
 async function loadItems() {
+    console.log('=== LOAD ALL ITEMS DEBUG START ===');
+    console.log('Token exists:', !!token);
+    
     showLoading(true);
     
     try {
-        const response = await fetch('/api/items', {
+        const url = '/api/items';
+        console.log('Loading from URL:', url);
+        
+        const response = await fetch(url, {
             headers: {
                 'Authorization': `Bearer ${token}`
             }
         });
         
+        console.log('Response status:', response.status);
+        console.log('Response ok:', response.ok);
+        
         if (response.ok) {
             allItems = await response.json();
+            console.log('Items loaded:', allItems.length);
+            console.log('First item:', allItems[0]);
             filterItems();
         } else if (response.status === 401) {
-            // Token expired or invalid
+            console.error('Authentication failed - clearing storage and redirecting');
             localStorage.clear();
             window.location.href = '/';
         } else {
+            console.error('Load items failed:', response.status);
+            const errorText = await response.text();
+            console.error('Error response:', errorText);
             showNoResults();
         }
     } catch (error) {
-        console.error('Error loading items:', error);
+        console.error('Load items error:', error);
+        console.error('Error stack:', error.stack);
         showNoResults();
     } finally {
         showLoading(false);
+        console.log('=== LOAD ALL ITEMS DEBUG END ===');
     }
 }
 
 // ===== SEARCH ITEMS =====
 async function searchItems(keyword) {
+    console.log('=== SEARCH DEBUG START ===');
+    console.log('Search keyword:', keyword);
+    console.log('Token exists:', !!token);
+    console.log('Token value:', token ? token.substring(0, 20) + '...' : 'NO TOKEN');
+    
     showLoading(true);
     
     try {
-        const response = await fetch(`/api/items?keyword=${encodeURIComponent(keyword)}`, {
+        const url = `/api/items/search?keyword=${encodeURIComponent(keyword)}`;
+        console.log('Search URL:', url);
+        
+        const response = await fetch(url, {
             headers: {
                 'Authorization': `Bearer ${token}`
             }
         });
         
+        console.log('Response status:', response.status);
+        console.log('Response ok:', response.ok);
+        console.log('Response headers:', response.headers);
+        
         if (response.ok) {
-            allItems = await response.json();
+            const items = await response.json();
+            console.log('Items received:', items.length);
+            console.log('First item:', items[0]);
+            
+            allItems = items;
             filterItems();
+            
+            console.log('Search successful - displaying', items.length, 'items');
         } else {
+            console.error('Search failed with status:', response.status);
+            const errorText = await response.text();
+            console.error('Error response:', errorText);
             showNoResults();
         }
     } catch (error) {
-        console.error('Error searching items:', error);
+        console.error('Search error:', error);
+        console.error('Error stack:', error.stack);
         showNoResults();
     } finally {
         showLoading(false);
+        console.log('=== SEARCH DEBUG END ===');
     }
 }
 

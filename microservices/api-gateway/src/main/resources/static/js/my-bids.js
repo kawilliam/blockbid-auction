@@ -77,7 +77,6 @@ async function loadMyBids() {
             }));
 
             allBids = bidsWithItems;
-            updateStats(allBids);
             displayBids(allBids);
         } else {
             showNoBids();
@@ -87,6 +86,8 @@ async function loadMyBids() {
         showNoBids();
     }
 }
+
+
 
 
 
@@ -108,6 +109,7 @@ function displayBids(bids) {
         if (!item) return '';
         
         const isWon = bid.displayStatus === 'WON';
+		const isPaid = item.paymentStatus === 'PAID';
         
         let statusClass = 'status-outbid';
         if (isWon) statusClass = 'status-won';
@@ -119,7 +121,7 @@ function displayBids(bids) {
                     <span>ITEM</span>
                 </div>
                 <div class="bid-content">
-                    <span class="bid-status-badge ${statusClass}">${bid.displayStatus}</span>
+                    <span class="bid-status-badge ${statusClass}">${isPaid ? 'PAID' : bid.displayStatus}</span>
                     <h3 class="bid-title">${item.name}</h3>
                     <p class="bid-description">${item.description}</p>
                     
@@ -139,9 +141,9 @@ function displayBids(bids) {
                     </div>
                     
                     <div class="bid-actions">
-                        ${isWon ? 
+                        ${(isWon && !isPaid) ? 
                             '<button class="btn btn-sm btn-primary" onclick="event.stopPropagation(); location.href=\'/payment.html?itemId=' + item.id + '\'">Pay Now</button>' :
-                            ''
+                            isPaid ? '<button class="btn btn-sm btn-success" disabled>Paid</button>' : ''
                         }
                     </div>
                 </div>
