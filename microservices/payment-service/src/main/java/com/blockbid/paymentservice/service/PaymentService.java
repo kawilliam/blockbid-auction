@@ -25,6 +25,8 @@ public class PaymentService {
     
     @Autowired
     private RestTemplate restTemplate;
+
+    private static final String BLOCKCHAIN_SERVICE_URL = "http://blockchain-service:8085";
     
     // Process payment (UC5 - Payment functionality)
     @Transactional
@@ -34,28 +36,60 @@ public class PaymentService {
         Long userId = Long.valueOf(paymentData.get("userId").toString());
         Double totalAmount = Double.valueOf(paymentData.get("totalAmount").toString());
         String shippingType = (String) paymentData.get("shippingType");
-        
+
+        // Get item price and shipping cost from frontend (they calculated it correctly)
+        Double itemPrice = paymentData.get("itemPrice") != null ?
+            Double.valueOf(paymentData.get("itemPrice").toString()) : null;
+        Double shippingCost = paymentData.get("shippingCost") != null ?
+            Double.valueOf(paymentData.get("shippingCost").toString()) : null;
+
         @SuppressWarnings("unchecked")
         Map<String, Object> paymentDetails = (Map<String, Object>) paymentData.get("paymentDetails");
-        
+
         // Validate payment data
         validatePaymentData(paymentData);
-        
+
         // Check if payment already exists for this item and user
         if (paymentRepository.existsByItemIdAndUserId(itemId, userId)) {
             throw new Exception("Payment already processed for this item");
         }
-        
+
         // Create payment record
         Payment payment = new Payment();
         payment.setItemId(itemId);
         payment.setUserId(userId);
         payment.setTotalAmount(totalAmount);
-        
-        // Calculate shipping cost
-        Double shippingCost = "expedited".equals(shippingType) ? 15.0 : 0.0;
-        payment.setShippingCost(shippingCost);
-        payment.setItemPrice(totalAmount - shippingCost);
+
+        // Use the shipping cost and item price from the frontend if provided
+        // Otherwise calculate it (for backward compatibility)
+        if (itemPrice != null && shippingCost != null) {
+            payment.setShippingCost(shippingCost);
+            payment.setItemPrice(itemPrice);
+        } else {
+            // Fallback: calculate from item data if not provided
+            Double standardShippingCost = 0.0;
+            Double expeditedShippingCostFromItem = 15.0;
+
+            try {
+                String itemServiceUrl = "http://item-service:8082/items/" + itemId;
+                Map<String, Object> item = restTemplate.getForObject(itemServiceUrl, Map.class);
+
+                if (item != null) {
+                    Object shippingCostObj = item.get("shippingCost");
+                    Object expeditedShippingObj = item.get("expeditedShippingCost");
+
+                    standardShippingCost = shippingCostObj != null ? Double.valueOf(shippingCostObj.toString()) : 0.0;
+                    expeditedShippingCostFromItem = expeditedShippingObj != null ? Double.valueOf(expeditedShippingObj.toString()) : 15.0;
+                }
+            } catch (Exception e) {
+                System.err.println("Error fetching item shipping costs: " + e.getMessage());
+            }
+
+            Double calculatedShippingCost = "expedited".equals(shippingType) ? expeditedShippingCostFromItem : standardShippingCost;
+            payment.setShippingCost(calculatedShippingCost);
+            payment.setItemPrice(totalAmount - calculatedShippingCost);
+        }
+
         payment.setShippingType(shippingType);
         
         // Set shipping address (would normally come from user service)
@@ -108,10 +142,34 @@ public class PaymentService {
         
         // Save payment
         Payment savedPayment = paymentRepository.save(payment);
-        
+
         // Create order for receipt (UC6)
         createOrderFromPayment(savedPayment, paymentData);
-        
+
+        // ===== RECORD PAYMENT ON BLOCKCHAIN =====
+        try {
+            Map<String, Object> blockchainRequest = new java.util.HashMap<>();
+            blockchainRequest.put("itemId", itemId);
+            blockchainRequest.put("payerId", userId);
+            blockchainRequest.put("amount", totalAmount);
+            blockchainRequest.put("paymentId", savedPayment.getTransactionId());
+
+            System.out.println("→ Recording payment on blockchain");
+
+            @SuppressWarnings("unchecked")
+            Map<String, Object> blockchainResponse = restTemplate.postForObject(
+                BLOCKCHAIN_SERVICE_URL + "/transactions/payment",
+                blockchainRequest,
+                Map.class
+            );
+
+            System.out.println("✓ Payment recorded on blockchain: " + blockchainResponse);
+
+        } catch (Exception e) {
+            System.err.println("✗ WARNING: Failed to record payment on blockchain: " + e.getMessage());
+            // Don't fail the payment if blockchain recording fails
+        }
+
         return savedPayment;
     }
     

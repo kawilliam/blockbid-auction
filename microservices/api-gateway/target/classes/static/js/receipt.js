@@ -21,6 +21,12 @@ let paymentId = null;
 let receiptData = null;
 let itemId = null;
 
+// ===== GET PAYMENT ID FROM URL =====
+function getPaymentIdFromUrl() {
+    const urlParams = new URLSearchParams(window.location.search);
+    return urlParams.get('paymentId');
+}
+
 window.addEventListener('DOMContentLoaded', () => {
     paymentId = getPaymentIdFromUrl();
     const urlParams = new URLSearchParams(window.location.search);

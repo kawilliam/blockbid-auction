@@ -21,6 +21,12 @@ let paymentId = null;
 let receiptData = null;
 let itemId = null;
 
+// ===== GET PAYMENT ID FROM URL =====
+function getPaymentIdFromUrl() {
+    const urlParams = new URLSearchParams(window.location.search);
+    return urlParams.get('paymentId');
+}
+
 window.addEventListener('DOMContentLoaded', () => {
     paymentId = getPaymentIdFromUrl();
     const urlParams = new URLSearchParams(window.location.search);
@@ -92,7 +98,7 @@ function displayReceipt(receiptData) {
     
     // Order details
     document.getElementById('order-number').textContent = receiptData.id || 'N/A';
-    document.getElementById('order-date').textContent = new Date(receiptData.timestamp || receiptData.paymentDate).toLocaleDateString();
+    document.getElementById('order-date').textContent = formatDateEST(receiptData.timestamp || receiptData.paymentDate);
     
     // Item details - populate the receipt-item container
     const receiptItem = document.getElementById('receipt-item');
@@ -280,7 +286,23 @@ function formatDate(date) {
         month: 'long',
         day: 'numeric',
         hour: '2-digit',
-        minute: '2-digit'
+        minute: '2-digit',
+        timeZone: 'America/New_York',
+        timeZoneName: 'short'
+    });
+}
+
+// Helper function to format dates in EST
+function formatDateEST(date) {
+    const d = new Date(date);
+    return d.toLocaleString('en-US', {
+        year: 'numeric',
+        month: 'numeric',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+        timeZone: 'America/New_York',
+        timeZoneName: 'short'
     });
 }
 
@@ -337,22 +359,52 @@ let blockchainVerification = null;
 async function loadBlockchainVerification(itemId) {
     try {
         console.log('Loading blockchain verification for item:', itemId);
-        
+
         // Get auction history from blockchain
         const response = await fetch(`/api/blockchain/auctions/${itemId}/history`, {
             headers: { 'Authorization': `Bearer ${token}` }
         });
-        
+
+        // Also fetch smart contract details
+        const contractResponse = await fetch(`/api/blockchain/contracts/${itemId}`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+
+        // Also fetch actual auction data to get real bid count
+        const auctionResponse = await fetch(`/api/auctions/${itemId}`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+
+        let auctionData = null;
+        if (auctionResponse.ok) {
+            const auctionJson = await auctionResponse.json();
+            auctionData = auctionJson.auction;
+            console.log('Auction data:', auctionData);
+        }
+
+        let contractData = null;
+        if (contractResponse.ok) {
+            contractData = await contractResponse.json();
+            console.log('Smart contract data:', contractData);
+        }
+
         if (response.ok) {
             const data = await response.json();
             console.log('Blockchain data:', data);
-            
-            if (data.transactions && data.transactions.length > 0) {
-                blockchainVerification = data;
-                displayBlockchainVerification(data);
-            } else {
-                console.log('No blockchain transactions found');
+
+            // Enhance blockchain data with actual bid count from auction
+            if (auctionData) {
+                data.actualTotalBids = auctionData.totalBids || 0;
             }
+
+            // Add smart contract information
+            if (contractData) {
+                data.smartContract = contractData;
+            }
+
+            // Show blockchain section even if no transactions yet
+            blockchainVerification = data;
+            displayBlockchainVerification(data);
         } else {
             console.log('Blockchain service not available');
         }
@@ -362,13 +414,11 @@ async function loadBlockchainVerification(itemId) {
 }
 
 function displayBlockchainVerification(data) {
-    // Find where to insert the blockchain section
-    const receiptContent = document.querySelector('.receipt-details') || 
-                          document.querySelector('.receipt-content') || 
-                          document.getElementById('receipt-content');
-    
-    if (!receiptContent) {
-        console.error('Could not find receipt container');
+    // Find where to insert the blockchain section - insert after receipt-section
+    const receiptSection = document.querySelector('.receipt-section');
+
+    if (!receiptSection) {
+        console.error('Could not find receipt section');
         return;
     }
     
@@ -387,6 +437,9 @@ function displayBlockchainVerification(data) {
         box-shadow: 0 4px 20px rgba(0, 255, 136, 0.2);
     `;
     
+    // Get smart contract data
+    const contract = data.smartContract;
+
     blockchainSection.innerHTML = `
         <div style="margin-bottom: 20px;">
             <h2 style="color: #00ff88; font-size: 24px; margin-bottom: 10px; display: flex; align-items: center; gap: 10px;">
@@ -396,10 +449,42 @@ function displayBlockchainVerification(data) {
                 This transaction is permanently recorded on the BlockBid blockchain
             </p>
         </div>
-        
+
+        ${contract ? `
+        <div style="background: #0a0a0a; padding: 15px; border-radius: 8px; margin-bottom: 15px;">
+            <h3 style="color: #00ff88; font-size: 16px; margin-bottom: 10px;">📜 Smart Contract</h3>
+            <div style="font-family: 'Courier New', monospace; font-size: 13px;">
+                <div style="margin: 8px 0;">
+                    <span style="color: #888;">Contract Address:</span><br>
+                    <span style="color: #fff; word-break: break-all;">${contract.contractAddress}</span>
+                </div>
+                <div style="margin: 8px 0;">
+                    <span style="color: #888;">Deployment Transaction:</span><br>
+                    <span style="color: #fff; word-break: break-all;">${contract.deploymentTxHash || 'N/A'}</span>
+                </div>
+                <div style="margin: 8px 0;">
+                    <span style="color: #888;">Contract Type:</span>
+                    <span style="color: #00ff88; margin-left: 10px;">${contract.contractType || 'AUCTION'}</span>
+                </div>
+                <div style="margin: 8px 0;">
+                    <span style="color: #888;">Status:</span>
+                    <span style="color: #00ff88; margin-left: 10px;">✓ ${contract.status || 'ACTIVE'}</span>
+                </div>
+                <div style="margin: 8px 0;">
+                    <span style="color: #888;">Deployed:</span>
+                    <span style="color: #fff; margin-left: 10px;">${new Date(contract.deployedAt).toLocaleString('en-US', {
+                        year: 'numeric', month: 'numeric', day: 'numeric',
+                        hour: '2-digit', minute: '2-digit',
+                        timeZone: 'America/New_York', timeZoneName: 'short'
+                    })}</span>
+                </div>
+            </div>
+        </div>
+        ` : ''}
+
         ${paymentTx ? `
         <div style="background: #0a0a0a; padding: 15px; border-radius: 8px; margin-bottom: 15px;">
-            <h3 style="color: #00ff88; font-size: 16px; margin-bottom: 10px;">Payment Transaction</h3>
+            <h3 style="color: #00ff88; font-size: 16px; margin-bottom: 10px;">💳 Payment Transaction</h3>
             <div style="font-family: 'Courier New', monospace; font-size: 13px;">
                 <div style="margin: 8px 0;">
                     <span style="color: #888;">Transaction Hash:</span><br>
@@ -410,6 +495,10 @@ function displayBlockchainVerification(data) {
                     <span style="color: #00ff88; margin-left: 10px;">#${paymentTx.blockNumber || 'Pending'}</span>
                 </div>
                 <div style="margin: 8px 0;">
+                    <span style="color: #888;">Block Hash:</span><br>
+                    <span style="color: #fff; word-break: break-all; font-size: 11px;">${paymentTx.blockHash || 'Pending confirmation'}</span>
+                </div>
+                <div style="margin: 8px 0;">
                     <span style="color: #888;">Status:</span>
                     <span style="color: #00ff88; margin-left: 10px;">✓ ${paymentTx.status || 'CONFIRMED'}</span>
                 </div>
@@ -417,51 +506,60 @@ function displayBlockchainVerification(data) {
                     <span style="color: #888;">Confirmations:</span>
                     <span style="color: #fff; margin-left: 10px;">${paymentTx.confirmations || 1}</span>
                 </div>
+                <div style="margin: 8px 0;">
+                    <span style="color: #888;">Gas Used:</span>
+                    <span style="color: #fff; margin-left: 10px;">${paymentTx.gasUsed || 21000}</span>
+                </div>
             </div>
         </div>
         ` : ''}
-        
+
         <div style="background: #0a0a0a; padding: 15px; border-radius: 8px; margin-bottom: 15px;">
-            <h3 style="color: #00ff88; font-size: 16px; margin-bottom: 10px;">Auction Statistics</h3>
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+            <h3 style="color: #00ff88; font-size: 16px; margin-bottom: 10px;">📊 Auction Statistics</h3>
+            <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 15px;">
                 <div>
                     <div style="color: #888; font-size: 13px;">Total Bids</div>
-                    <div style="color: #fff; font-size: 20px; font-weight: bold;">${bidTxs.length}</div>
+                    <div style="color: #fff; font-size: 20px; font-weight: bold;">${data.actualTotalBids !== undefined ? data.actualTotalBids : bidTxs.length}</div>
                 </div>
                 <div>
-                    <div style="color: #888; font-size: 13px;">Blockchain Transactions</div>
-                    <div style="color: #fff; font-size: 20px; font-weight: bold;">${data.totalTransactions}</div>
+                    <div style="color: #888; font-size: 13px;">Blockchain Txs</div>
+                    <div style="color: #fff; font-size: 20px; font-weight: bold;">${data.totalTransactions || 0}</div>
+                </div>
+                <div>
+                    <div style="color: #888; font-size: 13px;">Verified</div>
+                    <div style="color: #00ff88; font-size: 20px; font-weight: bold;">✓</div>
                 </div>
             </div>
         </div>
-        
+
         <div style="margin-top: 20px; display: flex; gap: 10px; flex-wrap: wrap;">
-            <button onclick="viewCompleteBlockchainHistory()" 
-                    style="background: #00ff88; color: #000; border: none; padding: 12px 24px; 
+            <button onclick="viewCompleteBlockchainHistory()"
+                    style="background: #00ff88; color: #000; border: none; padding: 12px 24px;
                            border-radius: 8px; font-size: 14px; font-weight: bold; cursor: pointer;
                            transition: all 0.3s;">
                 View Complete Blockchain History
             </button>
-            <button onclick="verifyBlockchainTransaction()" 
-                    style="background: transparent; color: #00ff88; border: 2px solid #00ff88; 
-                           padding: 10px 24px; border-radius: 8px; font-size: 14px; 
+            <button onclick="verifyBlockchainTransaction()"
+                    style="background: transparent; color: #00ff88; border: 2px solid #00ff88;
+                           padding: 10px 24px; border-radius: 8px; font-size: 14px;
                            font-weight: bold; cursor: pointer; transition: all 0.3s;">
                 Verify Transaction
             </button>
         </div>
-        
-        <div style="margin-top: 20px; padding: 15px; background: rgba(0, 255, 136, 0.1); 
+
+        <div style="margin-top: 20px; padding: 15px; background: rgba(0, 255, 136, 0.1);
                     border-radius: 8px; border-left: 4px solid #00ff88;">
             <p style="margin: 0; color: #888; font-size: 13px; line-height: 1.6;">
                 <strong style="color: #00ff88;">Why Blockchain?</strong><br>
-                This transaction is immutable and permanently recorded on our blockchain. 
-                The cryptographic hashes ensure authenticity and prevent tampering. 
+                This transaction is immutable and permanently recorded on our blockchain.
+                The cryptographic hashes ensure authenticity and prevent tampering.
                 Anyone can independently verify this transaction's validity.
             </p>
         </div>
     `;
-    
-    receiptContent.appendChild(blockchainSection);
+
+    // Insert blockchain section after the receipt section
+    receiptSection.parentNode.insertBefore(blockchainSection, receiptSection.nextSibling);
 }
 
 function viewCompleteBlockchainHistory() {
@@ -511,7 +609,11 @@ function viewCompleteBlockchainHistory() {
                             ${tx.transactionType}
                         </span>
                         <span style="color: #888; font-size: 12px;">
-                            ${new Date(tx.timestamp).toLocaleString()}
+                            ${new Date(tx.timestamp).toLocaleString('en-US', {
+                                year: 'numeric', month: 'numeric', day: 'numeric',
+                                hour: '2-digit', minute: '2-digit',
+                                timeZone: 'America/New_York', timeZoneName: 'short'
+                            })}
                         </span>
                     </div>
                     <div style="font-family: 'Courier New', monospace; font-size: 12px; color: #888;">

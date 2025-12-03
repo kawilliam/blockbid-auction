@@ -21,8 +21,9 @@ public class ItemService {
     
     @Autowired
     private RestTemplate restTemplate;
-    
+
     private static final String AUCTION_SERVICE_URL = "http://auction-service:8083";
+    private static final String BLOCKCHAIN_SERVICE_URL = "http://blockchain-service:8085";
     
     // Create new item (UC7 - Seller functionality)
     public Item createItem(Item item) throws Exception {
@@ -75,7 +76,7 @@ public class ItemService {
             );
             
             System.out.println("✓ Auction created: " + auctionResponse);
-            
+
         } catch (Exception e) {
             System.err.println("✗ ERROR: Failed to create auction: " + e.getMessage());
             e.printStackTrace();
@@ -83,7 +84,35 @@ public class ItemService {
             itemRepository.delete(savedItem);
             throw new Exception("Failed to create auction: " + e.getMessage());
         }
-        
+
+        // ===== DEPLOY SMART CONTRACT ON BLOCKCHAIN =====
+        try {
+            Map<String, Object> contractRequest = new HashMap<>();
+            contractRequest.put("itemId", savedItem.getId());
+            contractRequest.put("sellerId", savedItem.getSellerId());
+            contractRequest.put("startingPrice", savedItem.getStartingPrice());
+            contractRequest.put("endTime", savedItem.getEndTime().toString());
+
+            if (savedItem.getReservePrice() != null) {
+                contractRequest.put("reservePrice", savedItem.getReservePrice());
+            }
+
+            System.out.println("→ Deploying smart contract to blockchain: " + contractRequest);
+
+            @SuppressWarnings("unchecked")
+            Map<String, Object> contractResponse = restTemplate.postForObject(
+                BLOCKCHAIN_SERVICE_URL + "/contracts/deploy",
+                contractRequest,
+                Map.class
+            );
+
+            System.out.println("✓ Smart contract deployed: " + contractResponse);
+
+        } catch (Exception e) {
+            System.err.println("✗ WARNING: Failed to deploy smart contract: " + e.getMessage());
+            // Don't fail the item creation if blockchain deployment fails
+        }
+
         return savedItem;
     }
     

@@ -19,8 +19,9 @@ document.getElementById('logout-btn').addEventListener('click', () => {
 // ===== GLOBAL VARIABLES =====
 let itemId = null;
 let orderDetails = null;
-let shippingCost = 0;
-let expeditedShippingCost = 15.00;
+let selectedShippingCost = 0;
+let standardShippingCost = 0;
+let expeditedShippingCost = 0;
 
 // ===== GET ITEM ID FROM URL =====
 function getItemIdFromUrl() {
@@ -81,7 +82,12 @@ async function loadOrderDetails() {
 // ===== DISPLAY ORDER SUMMARY =====
 function displayOrderSummary(order) {
     const itemSummary = document.getElementById('item-summary');
-    
+
+    // Set shipping costs from item data
+    standardShippingCost = order.shippingCost || 0;
+    expeditedShippingCost = order.expeditedShippingCost || 15.00;
+    selectedShippingCost = standardShippingCost; // Default to standard
+
     itemSummary.innerHTML = `
         <div class="item-card-summary">
             <div class="item-image-small">
@@ -94,6 +100,9 @@ function displayOrderSummary(order) {
             </div>
         </div>
     `;
+
+    // Update the shipping option labels with actual costs
+    updateShippingLabels();
 }
 
 // ===== LOAD USER ADDRESS =====
@@ -102,49 +111,57 @@ async function loadUserAddress() {
 	        const response = await fetch(`/api/users/${userId}`, {
 	            headers: { 'Authorization': `Bearer ${token}` }
 	        });
-	        
+
 	        if (response.ok) {
 	            const user = await response.json();
-	            
-	            // Populate individual address fields
-	            document.getElementById('street-number').value = user.streetNumber || '';
-	            document.getElementById('street-name').value = user.streetName || '';
-	            document.getElementById('city').value = user.city || '';
-	            document.getElementById('province').value = user.province || '';
-	            document.getElementById('postal-code').value = user.postalCode || '';
-	            document.getElementById('country').value = user.country || 'Canada';
+
+	            // Format address for textarea
+	            const address = `${user.streetNumber || ''} ${user.streetName || ''}\n${user.city || ''}, ${user.province || ''} ${user.postalCode || ''}\n${user.country || 'Canada'}`;
+	            document.getElementById('shipping-address').value = address;
 	        }
 	    } catch (error) {
 	        console.error('Error loading address:', error);
 	    }
 }
 
+// ===== UPDATE SHIPPING LABELS =====
+function updateShippingLabels() {
+    // Update the standard shipping label
+    const standardLabel = document.querySelector('input[value="standard"]')?.parentElement;
+    if (standardLabel) {
+        const shippingDetails = standardLabel.querySelector('.shipping-details');
+        if (shippingDetails) {
+            shippingDetails.textContent = `5-7 business days • ${standardShippingCost === 0 ? 'Free' : '$' + standardShippingCost.toFixed(2)}`;
+        }
+    }
+
+    // Update the expedited shipping label and cost display
+    document.getElementById('expedited-cost').textContent = standardShippingCost === 0 ? `$${expeditedShippingCost.toFixed(2)}` : `+$${expeditedShippingCost.toFixed(2)}`;
+}
+
 // ===== SETUP SHIPPING OPTIONS =====
 function setupShippingOptions() {
     const shippingOptions = document.querySelectorAll('input[name="shipping"]');
-    
+
     shippingOptions.forEach(option => {
         option.addEventListener('change', (e) => {
             if (e.target.value === 'expedited') {
-                shippingCost = expeditedShippingCost;
+                selectedShippingCost = expeditedShippingCost;
             } else {
-                shippingCost = 0;
+                selectedShippingCost = standardShippingCost;
             }
             updateCostBreakdown();
         });
     });
-    
-    // Update expedited cost display
-    document.getElementById('expedited-cost').textContent = `+$${expeditedShippingCost.toFixed(2)}`;
 }
 
 // ===== UPDATE COST BREAKDOWN =====
 function updateCostBreakdown() {
     if (!orderDetails) return;
-    
+
     const itemPrice = orderDetails.currentPrice;
-    const totalAmount = itemPrice + shippingCost;
-    
+    const totalAmount = itemPrice + selectedShippingCost;
+
     const costBreakdown = document.getElementById('cost-breakdown');
     costBreakdown.innerHTML = `
         <div class="cost-row subtotal">
@@ -153,14 +170,14 @@ function updateCostBreakdown() {
         </div>
         <div class="cost-row shipping">
             <span>Shipping:</span>
-            <span>${shippingCost === 0 ? 'Free' : '$' + shippingCost.toFixed(2)}</span>
+            <span>${selectedShippingCost === 0 ? 'Free' : '$' + selectedShippingCost.toFixed(2)}</span>
         </div>
         <div class="cost-row total">
             <span>Total:</span>
             <span>$${totalAmount.toFixed(2)}</span>
         </div>
     `;
-    
+
     document.getElementById('total-amount').textContent = `$${totalAmount.toFixed(2)}`;
 }
 
@@ -258,7 +275,9 @@ async function processPayment() {
     const paymentData = {
         itemId: itemId,
         userId: userId,
-        totalAmount: orderDetails.currentPrice + shippingCost,
+        itemPrice: orderDetails.currentPrice,
+        shippingCost: selectedShippingCost,
+        totalAmount: orderDetails.currentPrice + selectedShippingCost,
         shippingType: document.querySelector('input[name="shipping"]:checked').value,
         paymentDetails: {
             cardNumber: document.getElementById('card-number').value,

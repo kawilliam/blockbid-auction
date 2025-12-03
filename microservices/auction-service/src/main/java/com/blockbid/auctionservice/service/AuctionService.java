@@ -33,6 +33,7 @@ public class AuctionService {
 
     private static final String ITEM_SERVICE_URL = "http://item-service:8082";
     private static final String USER_SERVICE_URL = "http://user-service:8081";
+    private static final String BLOCKCHAIN_SERVICE_URL = "http://blockchain-service:8085";
     
     // Create new auction
     public Auction createAuction(Auction auction) throws Exception {
@@ -153,6 +154,34 @@ public class AuctionService {
             // Don't fail the bid if item update fails - bid is already saved
         }
 
+        // ===== RECORD BID ON BLOCKCHAIN =====
+        try {
+            Map<String, Object> blockchainRequest = new HashMap<>();
+            blockchainRequest.put("itemId", itemId);
+            blockchainRequest.put("bidderId", bidderId);
+            blockchainRequest.put("bidAmount", bidAmount);
+
+            System.out.println("→ Recording bid on blockchain");
+
+            @SuppressWarnings("unchecked")
+            Map<String, Object> blockchainResponse = restTemplate.postForObject(
+                BLOCKCHAIN_SERVICE_URL + "/transactions/bid",
+                blockchainRequest,
+                Map.class
+            );
+
+            // Store blockchain transaction hash in bid
+            if (blockchainResponse != null && blockchainResponse.get("transactionHash") != null) {
+                savedBid.setTransactionHash(blockchainResponse.get("transactionHash").toString());
+                bidRepository.save(savedBid);
+                System.out.println("✓ Bid recorded on blockchain: " + blockchainResponse.get("transactionHash"));
+            }
+
+        } catch (Exception e) {
+            System.err.println("✗ WARNING: Failed to record bid on blockchain: " + e.getMessage());
+            // Don't fail the bid if blockchain recording fails
+        }
+
         // Broadcast WebSocket update to all connected clients
         try {
             String bidderName = fetchBidderName(bidderId);
@@ -241,7 +270,30 @@ public class AuctionService {
             System.err.println("✗ WARNING: Failed to update item status: " + e.getMessage());
             // Continue anyway - auction is already marked as ended
         }
-        
+
+        // ===== RECORD AUCTION END ON BLOCKCHAIN =====
+        try {
+            Map<String, Object> blockchainRequest = new HashMap<>();
+            blockchainRequest.put("itemId", itemId);
+            blockchainRequest.put("winnerId", auction.getHighestBidderId());
+            blockchainRequest.put("winningBid", auction.getCurrentPrice());
+
+            System.out.println("→ Recording auction end on blockchain");
+
+            @SuppressWarnings("unchecked")
+            Map<String, Object> blockchainResponse = restTemplate.postForObject(
+                BLOCKCHAIN_SERVICE_URL + "/transactions/auction-end",
+                blockchainRequest,
+                Map.class
+            );
+
+            System.out.println("✓ Auction end recorded on blockchain: " + blockchainResponse);
+
+        } catch (Exception e) {
+            System.err.println("✗ WARNING: Failed to record auction end on blockchain: " + e.getMessage());
+            // Don't fail the auction end if blockchain recording fails
+        }
+
         return auctionRepository.save(auction);
     }
     
