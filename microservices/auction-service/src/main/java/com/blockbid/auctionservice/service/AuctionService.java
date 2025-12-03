@@ -4,6 +4,7 @@ import com.blockbid.auctionservice.entity.Auction;
 import com.blockbid.auctionservice.entity.Bid;
 import com.blockbid.auctionservice.repository.AuctionRepository;
 import com.blockbid.auctionservice.repository.BidRepository;
+import com.blockbid.auctionservice.websocket.AuctionWebSocketHandler;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -17,17 +18,21 @@ import java.util.Optional;
 
 @Service
 public class AuctionService {
-    
+
     @Autowired
     private AuctionRepository auctionRepository;
-    
+
     @Autowired
     private BidRepository bidRepository;
-    
+
     @Autowired
     private RestTemplate restTemplate;
-    
+
+    @Autowired
+    private AuctionWebSocketHandler webSocketHandler;
+
     private static final String ITEM_SERVICE_URL = "http://item-service:8082";
+    private static final String USER_SERVICE_URL = "http://user-service:8081";
     
     // Create new auction
     public Auction createAuction(Auction auction) throws Exception {
@@ -133,21 +138,41 @@ public class AuctionService {
             Map<String, Object> updateRequest = new HashMap<>();
             updateRequest.put("price", bidAmount);
             updateRequest.put("bidderId", bidderId);
-            
+
             System.out.println("→ Updating item " + itemId + " with new price: $" + bidAmount);
-            
+
             restTemplate.put(
                 ITEM_SERVICE_URL + "/" + itemId + "/bid",
                 updateRequest
             );
-            
+
             System.out.println("✓ Item price updated successfully");
-            
+
         } catch (Exception e) {
             System.err.println("✗ WARNING: Failed to update item price: " + e.getMessage());
             // Don't fail the bid if item update fails - bid is already saved
         }
-        
+
+        // Broadcast WebSocket update to all connected clients
+        try {
+            String bidderName = fetchBidderName(bidderId);
+
+            Map<String, Object> bidData = new HashMap<>();
+            bidData.put("itemId", itemId);
+            bidData.put("bidderId", bidderId);
+            bidData.put("bidderName", bidderName);
+            bidData.put("amount", bidAmount);
+            bidData.put("bidTime", savedBid.getBidTime());
+            bidData.put("totalBids", auction.getTotalBids());
+
+            webSocketHandler.broadcastNewBid(itemId, bidData);
+            System.out.println("✓ WebSocket broadcast sent for new bid");
+
+        } catch (Exception e) {
+            System.err.println("✗ WARNING: Failed to broadcast WebSocket update: " + e.getMessage());
+            // Don't fail the bid if WebSocket broadcast fails
+        }
+
         return savedBid;
     }
     
@@ -260,5 +285,19 @@ public class AuctionService {
     public long getTimeRemaining(Long itemId) {
         Optional<Auction> auction = auctionRepository.findByItemId(itemId);
         return auction.map(Auction::getTimeRemaining).orElse(0L);
+    }
+
+    // Fetch bidder name from user service
+    private String fetchBidderName(Long bidderId) {
+        try {
+            String userServiceUrl = USER_SERVICE_URL + "/internal/users/" + bidderId;
+            Map<String, Object> user = restTemplate.getForObject(userServiceUrl, Map.class);
+            if (user != null && user.get("username") != null) {
+                return user.get("username").toString();
+            }
+        } catch (Exception e) {
+            System.err.println("Failed to fetch bidder name: " + e.getMessage());
+        }
+        return "User #" + bidderId;
     }
 }

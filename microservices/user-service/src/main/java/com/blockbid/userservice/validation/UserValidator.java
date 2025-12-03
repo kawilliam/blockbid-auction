@@ -124,20 +124,45 @@ public class UserValidator {
         }
         
         // Validate address
-        String address = request.get("address");
-        if (address == null || address.trim().isEmpty()) {
-            errors.put("field", "address");
-            errors.put("message", "Address is required");
+        String streetNumber = request.get("streetNumber");
+        if (streetNumber == null || streetNumber.trim().isEmpty()) {
+            errors.put("field", "streetNumber");
+            errors.put("message", "Street number is required");
             return errors;
         }
-        if (address.length() < 10) {
-            errors.put("field", "address");
-            errors.put("message", "Please enter a complete address (at least 10 characters)");
+        
+        String streetName = request.get("streetName");
+        if (streetName == null || streetName.trim().isEmpty()) {
+            errors.put("field", "streetName");
+            errors.put("message", "Street name is required");
             return errors;
         }
-        if (address.length() > 200) {
-            errors.put("field", "address");
-            errors.put("message", "Address is too long (max 200 characters)");
+        
+        String city = request.get("city");
+        if (city == null || city.trim().isEmpty()) {
+            errors.put("field", "city");
+            errors.put("message", "City is required");
+            return errors;
+        }
+        
+        String province = request.get("province");
+        if (province == null || province.trim().isEmpty()) {
+            errors.put("field", "province");
+            errors.put("message", "Province is required");
+            return errors;
+        }
+        
+        String postalCode = request.get("postalCode");
+        if (postalCode == null || postalCode.trim().isEmpty()) {
+            errors.put("field", "postalCode");
+            errors.put("message", "Postal code is required");
+            return errors;
+        }
+        
+        String country = request.get("country");
+        if (country == null || country.trim().isEmpty()) {
+            errors.put("field", "country");
+            errors.put("message", "Country is required");
             return errors;
         }
         

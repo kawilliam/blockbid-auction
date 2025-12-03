@@ -374,6 +374,115 @@ border: 1px solid #444444;
     color: var(--text-secondary);
 }
 
+/* ===== WEBSOCKET CONNECTION STATUS ===== */
+.connection-status {
+    position: fixed;
+    top: 70px;
+    right: 20px;
+    padding: 8px 16px;
+    border-radius: 20px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    z-index: 1000;
+    transition: all 0.3s ease;
+}
+
+.connection-status.connected {
+    background: #d1fae5;
+    color: #065f46;
+    border: 1px solid #059669;
+}
+
+.connection-status.disconnected {
+    background: #fef3c7;
+    color: #92400e;
+    border: 1px solid #f59e0b;
+    animation: pulse 2s infinite;
+}
+
+.connection-status.error {
+    background: #fee2e2;
+    color: #991b1b;
+    border: 1px solid #dc2626;
+}
+
+.connection-status.failed {
+    background: #f3f4f6;
+    color: #6b7280;
+    border: 1px solid #9ca3af;
+}
+
+@keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.7; }
+}
+
+/* ===== PRICE FLASH ANIMATION ===== */
+@keyframes priceFlash {
+    0% {
+        background-color: transparent;
+        transform: scale(1);
+    }
+    50% {
+        background-color: rgba(16, 185, 129, 0.2);
+        transform: scale(1.05);
+    }
+    100% {
+        background-color: transparent;
+        transform: scale(1);
+    }
+}
+
+.price-flash {
+    animation: priceFlash 1s ease;
+}
+
+/* ===== BID NOTIFICATIONS ===== */
+.bid-notification {
+    position: fixed;
+    top: 100px;
+    right: 20px;
+    background: #111111;
+    border: 2px solid #00ff88;
+    border-radius: 8px;
+    padding: 16px 24px;
+    color: #ffffff;
+    font-weight: 600;
+    box-shadow: 0 10px 30px rgba(0, 255, 136, 0.3);
+    z-index: 1001;
+    transform: translateX(400px);
+    opacity: 0;
+    transition: all 0.3s ease;
+    max-width: 350px;
+}
+
+.bid-notification.show {
+    transform: translateX(0);
+    opacity: 1;
+}
+
+/* ===== BID MESSAGE STYLES ===== */
+.bid-message {
+    margin-top: 20px;
+    padding: 12px 20px;
+    border-radius: 8px;
+    text-align: center;
+    font-weight: 600;
+    display: none;
+}
+
+.bid-message.success {
+    background: #d1fae5;
+    color: #065f46;
+    border: 1px solid #059669;
+}
+
+.bid-message.error {
+    background: #fee2e2;
+    color: #991b1b;
+    border: 1px solid #dc2626;
+}
+
 /* ===== RESPONSIVE DESIGN ===== */
 @media (max-width: 768px) {
     .item-content {

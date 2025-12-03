@@ -38,7 +38,12 @@ public class UserController {
                 request.get("firstName"),
                 request.get("lastName"),
                 request.get("email"),
-                request.get("address")
+                request.get("streetNumber"),
+                request.get("streetName"),
+                request.get("city"),
+                request.get("province"),
+                request.get("postalCode"),
+                request.get("country")
             );
             
             User savedUser = userService.registerUser(user);
@@ -110,19 +115,16 @@ public class UserController {
     public ResponseEntity<?> getUser(@PathVariable Long id, 
                                    @RequestHeader(value = "Authorization", required = false) String authHeader) {
         try {
-            // Validate JWT token
-            if (authHeader == null || !authHeader.startsWith("Bearer ")) {
-                Map<String, String> error = new HashMap<>();
-                error.put("message", "Authorization header required");
-                return ResponseEntity.status(401).body(error);
+            // Validate JWT token ONLY if provided (make auth optional)
+            if (authHeader != null && authHeader.startsWith("Bearer ")) {
+                String token = authHeader.substring(7);
+                if (!jwtUtils.validateJwtToken(token)) {
+                    Map<String, String> error = new HashMap<>();
+                    error.put("message", "Invalid token");
+                    return ResponseEntity.status(401).body(error);
+                }
             }
-            
-            String token = authHeader.substring(7);
-            if (!jwtUtils.validateJwtToken(token)) {
-                Map<String, String> error = new HashMap<>();
-                error.put("message", "Invalid token");
-                return ResponseEntity.status(401).body(error);
-            }
+            // Allow requests to proceed even without auth header
             
             Optional<User> userOptional = userService.findById(id);
             if (userOptional.isEmpty()) {
@@ -140,7 +142,12 @@ public class UserController {
             response.put("firstName", user.getFirstName());
             response.put("lastName", user.getLastName());
             response.put("email", user.getEmail());
-            response.put("address", user.getAddress());
+            response.put("streetNumber", user.getStreetNumber());
+            response.put("streetName", user.getStreetName());
+            response.put("city", user.getCity());
+            response.put("province", user.getProvince());
+            response.put("postalCode", user.getPostalCode());
+            response.put("country", user.getCountry());
             response.put("createdAt", user.getCreatedAt());
             
             return ResponseEntity.ok(response);
@@ -149,6 +156,29 @@ public class UserController {
             Map<String, String> error = new HashMap<>();
             error.put("message", e.getMessage());
             return ResponseEntity.badRequest().body(error);
+        }
+    }
+    
+    @GetMapping("/internal/users/{id}")
+    public ResponseEntity<?> getUserInternal(@PathVariable Long id) {
+        try {
+            Optional<User> userOptional = userService.findById(id);
+            if (userOptional.isEmpty()) {
+                return ResponseEntity.notFound().build();
+            }
+            
+            User user = userOptional.get();
+            
+            Map<String, Object> response = new HashMap<>();
+            response.put("id", user.getId());
+            response.put("username", user.getUsername());
+            response.put("firstName", user.getFirstName());
+            response.put("lastName", user.getLastName());
+            // Don't include sensitive data like email for internal calls
+            
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(Map.of("message", e.getMessage()));
         }
     }
     

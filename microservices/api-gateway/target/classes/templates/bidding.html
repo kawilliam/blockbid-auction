@@ -9,25 +9,27 @@
 </head>
 <body>
 	<nav class="navbar">
-		<div class="nav-container">
-			<div class="nav-brand">
-				<h2>BlockBid</h2>
-			</div>
-			<div class="nav-menu">
-				<button class="btn btn-secondary" onclick="location.href='/catalogue.html'">Back to Catalogue</button>
-				<span class="nav-user">Welcome, <strong id="username-display"></strong></span>
-				<button class="btn btn-outline" id="logout-btn">Logout</button>
-			</div>
-		</div>
-	</nav>
-	
+        <div class="nav-container">
+            <div class="nav-brand">
+                <h2 onclick="location.href='/catalogue.html'" style="cursor: pointer;">BlockBid</h2>
+            </div>
+            <div class="nav-menu">
+                <a href="/catalogue.html" class="nav-link">Browse</a>
+                <a href="/seller.html" class="nav-link">Sell Item</a>
+                <a href="/my-bids.html" class="nav-link">My Bids</a>
+                <a href="/my-listings.html" class="nav-link" style="background-color: rgba(255,255,255,0.1);">My Listings</a>
+                <span class="nav-user">Welcome, <strong id="username-display"></strong></span>
+                <button class="btn btn-outline" id="logout-btn">Logout</button>
+            </div>
+        </div>
+    </nav>
+
+	<!-- WebSocket Connection Status -->
+	<div id="connection-status" class="connection-status" style="display: none;"></div>
+
 	<div class="container">
 		<section class="item-section">
 			<div class="item-header">
-				<button class="btn btn-secondary back-btn" onclick="history.back()">Back</button>
-				<div class="item-status" id="item-status">
-					<span class="status-badge" id="status-badge">Loading...</span>
-				</div>
 			</div>
 			
 			<div class="item-content">

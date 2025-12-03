@@ -1,3 +1,5 @@
+const catalogueTimers = new Map();
+
 // ===== CHECK AUTHENTICATION =====
 const token = localStorage.getItem('token');
 const userId = localStorage.getItem('userId');
@@ -344,7 +346,13 @@ function createItemCard(item) {
 function startTimer(itemId, endTime) {
     const timerElement = document.getElementById(`timer-${itemId}`);
     if (!timerElement) return;
-    
+
+    // clear existing timer for this item
+    if (catalogueTimers.has(itemId)) {
+        clearInterval(catalogueTimers.get(itemId));
+        catalogueTimers.delete(itemId);
+    }
+
     const updateTimer = () => {
         const now = new Date().getTime();
         const end = new Date(endTime).getTime();
@@ -363,7 +371,8 @@ function startTimer(itemId, endTime) {
     };
     
     updateTimer();
-    setInterval(updateTimer, 1000);
+    const handle = setInterval(updateTimer, 1000);
+    catalogueTimers.set(itemId, handle);
 }
 
 // ===== UTILITY FUNCTIONS =====

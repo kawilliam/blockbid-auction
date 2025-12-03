@@ -59,7 +59,36 @@ public class PaymentService {
         payment.setShippingType(shippingType);
         
         // Set shipping address (would normally come from user service)
-        payment.setShippingAddress("123 Default Address"); // Placeholder
+        try {
+            String userServiceUrl = "http://user-service:8081/users/" + userId;
+            Map<String, Object> user = restTemplate.getForObject(userServiceUrl, Map.class);
+            
+            if (user != null) {
+                // Set individual address fields (required by database)
+                payment.setStreetNumber((String) user.get("streetNumber"));
+                payment.setStreetName((String) user.get("streetName"));
+                payment.setCity((String) user.get("city"));
+                payment.setProvince((String) user.get("province"));
+                payment.setPostalCode((String) user.get("postalCode"));
+                payment.setCountry((String) user.get("country"));
+                
+                // Also set formatted address string
+                String address = String.format("%s %s\n%s, %s %s\n%s",
+                    user.get("streetNumber"),
+                    user.get("streetName"),
+                    user.get("city"),
+                    user.get("province"),
+                    user.get("postalCode"),
+                    user.get("country")
+                );
+                payment.setShippingAddress(address);
+            } else {
+                throw new Exception("Could not fetch user address");
+            }
+        } catch (Exception e) {
+            System.err.println("Error fetching user address: " + e.getMessage());
+            throw new Exception("Could not load user address for payment");
+        } 
         
         // Process payment details (securely store only necessary info)
         String cardNumber = (String) paymentDetails.get("cardNumber");
@@ -215,7 +244,6 @@ public class PaymentService {
         receipt.put("itemPrice", payment.getItemPrice());
         receipt.put("shippingCost", payment.getShippingCost());
         receipt.put("shippingType", payment.getShippingType());
-        receipt.put("shippingAddress", payment.getShippingAddress());
         receipt.put("status", payment.getStatus());
         receipt.put("timestamp", payment.getCreatedAt());
         receipt.put("paymentDate", payment.getCreatedAt());
@@ -279,9 +307,30 @@ public class PaymentService {
             Map<String, Object> user = restTemplate.getForObject(userServiceUrl, Map.class);
             if (user != null) {
                 receipt.put("user", user);
+                
+                String storedAddress = payment.getShippingAddress();
+                if (storedAddress == null || storedAddress.isEmpty() || 
+                    storedAddress.equals("123 Default Address") || 
+                    storedAddress.equals("Address unavailable")) {
+                    
+                    // Build address from user data
+                    String formattedAddress = String.format("%s %s\n%s, %s %s\n%s",
+                        user.get("streetNumber"),
+                        user.get("streetName"),
+                        user.get("city"),
+                        user.get("province"),
+                        user.get("postalCode"),
+                        user.get("country")
+                    );
+                    receipt.put("shippingAddress", formattedAddress);
+                } else {
+                    // Use stored address if it's valid
+                    receipt.put("shippingAddress", storedAddress);
+                }
             }
         } catch (Exception e) {
             System.err.println("Error fetching user from User Service: " + e.getMessage());
+            receipt.put("shippingAddress", payment.getShippingAddress());
         }
 
         return receipt;

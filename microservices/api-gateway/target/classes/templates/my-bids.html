@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Bids - BlockBid</title>
+    <link rel="stylesheet" href="css/main.css">
+    <link rel="stylesheet" href="css/my-bids.css">
+</head>
+<body>
+    <!-- Navigation Bar -->
+    <nav class="navbar">
+        <div class="nav-container">
+            <div class="nav-brand">
+                <h2 onclick="location.href='/catalogue.html'" style="cursor: pointer;">BlockBid</h2>
+            </div>
+            <div class="nav-menu">
+                <a href="/catalogue.html" class="nav-link">Browse</a>
+                <a href="/seller.html" class="nav-link">Sell Item</a>
+                <a href="/my-bids.html" class="nav-link" style="background-color: rgba(255,255,255,0.1);">My Bids</a>
+                <a href="/my-listings.html" class="nav-link">My Listings</a>
+                <span class="nav-user">Welcome, <strong id="username-display"></strong></span>
+                <button class="btn btn-outline" id="logout-btn">Logout</button>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container">
+        <section class="my-bids-header">
+            <h1>My Bids</h1>
+            <p class="subtitle">Track all your bidding activity</p>
+        </section>
+
+        <!-- Filter Tabs -->
+        <section class="bid-filters">
+            <button class="filter-btn active" data-filter="all">All Bids</button>
+            <button class="filter-btn" data-filter="winning">Winning</button>
+            <button class="filter-btn" data-filter="outbid">Outbid</button>
+            <button class="filter-btn" data-filter="won">Won</button>
+            <button class="filter-btn" data-filter="lost">Lost</button>
+        </section>
+
+        <!-- Bids List -->
+        <section class="bids-section">
+            <div id="bids-container" class="bids-list">
+                <div class="loading">Loading your bids...</div>
+            </div>
+            <div id="no-bids" class="no-results" style="display: none;">
+                <h3>No bids found</h3>
+                <p>You haven't placed any bids yet</p>
+                <button class="btn btn-primary" onclick="location.href='/catalogue.html'">Browse Auctions</button>
+            </div>
+        </section>
+    </div>
+
+    <script src="js/my-bids.js"></script>
+</body>
+</html>

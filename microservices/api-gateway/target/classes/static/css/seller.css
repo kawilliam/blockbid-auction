@@ -78,7 +78,10 @@
 .form-group select {
     width: 100%;
     padding: 12px;
-    border: 2px solid var(--border-color);
+    background: #000000;
+    border: 2px solid #444444;
+    color: #ffffff;
+    border-radius: 0;
     border-radius: 8px;
     font-size: 1rem;
     transition: border-color 0.3s ease;
@@ -88,8 +91,8 @@
 .form-group textarea:focus,
 .form-group select:focus {
     outline: none;
-    border-color: var(--primary-color);
-    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+    border-color: #ffffff;
+	box-shadow: none;
 }
 
 .form-group textarea {
@@ -183,26 +186,27 @@
 
 /* ===== ITEM PREVIEW ===== */
 .item-preview {
-    border: 1px solid #333333;
+    border: 1px solid #444444;
+    background: #0a0a0a;
     border-radius: 0;
-    background: #222222;
     overflow: hidden;
     transition: all 0.3s ease;
 }
 
 .item-preview:hover {
-    border-color: var(--primary-color);
-    box-shadow: 0 4px 12px rgba(37, 99, 235, 0.2);
+    border-color: #ffffff;
+	box-shadow: none;
 }
 
 .preview-image {
     height: 150px;
-    background: #333333;
+    background: #222222;
+    border-bottom: 1px solid #444444;
+    color: #666666;
     border-radius: 0;
     display: flex;
     align-items: center;
     justify-content: center;
-    color: white;
     font-weight: 600;
     font-size: 2rem;
 }

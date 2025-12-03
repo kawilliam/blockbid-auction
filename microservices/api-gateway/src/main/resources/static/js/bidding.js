@@ -36,6 +36,10 @@ let highestBid = null;
 let itemId = null;
 let auctionTimer = null;
 let isSubmittingBid = false;
+let ws = null;
+let reconnectAttempts = 0;
+let maxReconnectAttempts = 5;
+let reconnectDelay = 1000;
 
 // ===== GET ITEM ID FROM URL =====
 function getItemIdFromUrl() {
@@ -46,21 +50,31 @@ function getItemIdFromUrl() {
 // ===== LOAD PAGE DATA =====
 window.addEventListener('DOMContentLoaded', () => {
     itemId = getItemIdFromUrl();
-    
+
     if (!itemId) {
         alert('No item specified');
         window.location.href = '/catalogue.html';
         return;
     }
-    
+
     loadItemDetails();
     loadBidHistory();
-    
-    // Auto-refresh every 30 seconds
+    connectWebSocket();
+
+    // Fallback polling every 60 seconds (in case WebSocket fails)
     setInterval(() => {
-        loadItemDetails();
-        loadBidHistory();
-    }, 30000);
+        if (!ws || ws.readyState !== WebSocket.OPEN) {
+            loadItemDetails();
+            loadBidHistory();
+        }
+    }, 60000);
+});
+
+// Cleanup on page unload
+window.addEventListener('beforeunload', () => {
+    if (ws) {
+        ws.close();
+    }
 });
 
 // ===== LOAD ITEM DETAILS =====
@@ -96,34 +110,39 @@ async function loadItemDetails() {
 
 // ===== DISPLAY ITEM DETAILS =====
 function displayItemDetails(item) {
-    // Basic item info
-    document.getElementById('item-title').textContent = item.name;
-    document.getElementById('item-description').textContent = item.description;
-    document.getElementById('current-price').textContent = `$${item.currentPrice.toFixed(2)}`;
-    document.getElementById('bid-count').textContent = item.bidCount || 0;
-    document.getElementById('seller-name').textContent = item.sellerName || 'Unknown';
-    
-    // Status badge
+    // Defensive null-checks
+    const titleEl = document.getElementById('item-title');
+    const descEl = document.getElementById('item-description');
+    const priceEl = document.getElementById('current-price');
+    const bidCountEl = document.getElementById('bid-count');
+    const sellerEl = document.getElementById('seller-name');
     const statusBadge = document.getElementById('status-badge');
-    const timeRemaining = getTimeRemaining(item.endTime);
-    
-    if (item.status === 'ACTIVE') {
-        if (timeRemaining.includes('Ended')) {
-            statusBadge.textContent = 'Ended';
-            statusBadge.className = 'status-badge ended';
-        } else {
-            const hours = parseInt(timeRemaining);
-            if (hours <= 24) {
+
+    if (titleEl) titleEl.textContent = item.name || '';
+    if (descEl) descEl.textContent = item.description || '';
+    if (priceEl) priceEl.textContent = `$${(item.currentPrice || 0).toFixed(2)}`;
+    if (bidCountEl) bidCountEl.textContent = item.bidCount || 0;
+    if (sellerEl) sellerEl.textContent = item.sellerName || 'Unknown';
+
+    // Status badge decision uses numeric hours remaining to avoid parseInt on strings
+    const hoursLeft = getHoursRemaining(item.endTime);
+
+    if (statusBadge) {
+        if (item.status === 'ACTIVE') {
+            if (hoursLeft === 0) {
+                statusBadge.textContent = 'Ended';
+                statusBadge.className = 'status-badge ended';
+            } else if (hoursLeft <= 24) {
                 statusBadge.textContent = 'Ending Soon';
                 statusBadge.className = 'status-badge ending';
             } else {
                 statusBadge.textContent = 'Active';
                 statusBadge.className = 'status-badge active';
             }
+        } else {
+            statusBadge.textContent = 'Ended';
+            statusBadge.className = 'status-badge ended';
         }
-    } else {
-        statusBadge.textContent = 'Ended';
-        statusBadge.className = 'status-badge ended';
     }
 }
 
@@ -214,26 +233,28 @@ function setupActiveBidding(item) {
 function setupBidForm() {
     const bidForm = document.getElementById('bid-form');
     const bidInput = document.getElementById('bid-amount');
-    
-    // Clear error on input
-    bidInput.addEventListener('input', clearBidFieldError);
-    
-    bidForm.addEventListener('submit', async (e) => {
+
+    if (!bidForm || !bidInput) return;
+
+    // Replace event handlers to avoid stacking listeners on repeated setup
+    bidInput.oninput = clearBidFieldError;
+
+    bidForm.onsubmit = async (e) => {
         e.preventDefault();
         clearBidFieldError();
-        
+
         const bidAmount = document.getElementById('bid-amount').value;
-        
+
         // Validate bid amount
         const validation = validateBidAmount(bidAmount, currentItem.currentPrice);
-        
+
         if (!validation.valid) {
             showBidFieldError(validation.error);
             return;
         }
-        
+
         await placeBid(parseFloat(bidAmount));
-    });
+    };
 }
 
 // ===== BID VALIDATION =====
@@ -500,19 +521,285 @@ function proceedToPayment() {
     window.location.href = `/payment.html?itemId=${itemId}`;
 }
 
+// ===== WEBSOCKET CONNECTION =====
+function connectWebSocket() {
+    try {
+        // Determine WebSocket protocol based on current page protocol
+        const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+        const wsUrl = `${protocol}//${window.location.host}/ws/auction/${itemId}?token=${token}`;
+
+        console.log('Connecting to WebSocket:', wsUrl);
+        ws = new WebSocket(wsUrl);
+
+        ws.onopen = () => {
+            console.log('WebSocket connected');
+            reconnectAttempts = 0;
+            updateConnectionStatus('connected');
+
+            // Subscribe to bid updates for this item
+            ws.send(JSON.stringify({
+                type: 'SUBSCRIBE',
+                itemId: itemId,
+                userId: userId
+            }));
+        };
+
+        ws.onmessage = (event) => {
+            try {
+                const message = JSON.parse(event.data);
+                handleWebSocketMessage(message);
+            } catch (error) {
+                console.error('Error parsing WebSocket message:', error);
+            }
+        };
+
+        ws.onerror = (error) => {
+            console.error('WebSocket error:', error);
+            updateConnectionStatus('error');
+        };
+
+        ws.onclose = (event) => {
+            console.log('WebSocket closed:', event.code, event.reason);
+            updateConnectionStatus('disconnected');
+
+            // Attempt to reconnect
+            if (reconnectAttempts < maxReconnectAttempts) {
+                reconnectAttempts++;
+                const delay = reconnectDelay * Math.pow(2, reconnectAttempts - 1);
+                console.log(`Reconnecting in ${delay}ms (attempt ${reconnectAttempts}/${maxReconnectAttempts})`);
+
+                setTimeout(() => {
+                    connectWebSocket();
+                }, delay);
+            } else {
+                console.error('Max reconnection attempts reached');
+                updateConnectionStatus('failed');
+            }
+        };
+
+    } catch (error) {
+        console.error('Error creating WebSocket:', error);
+        updateConnectionStatus('error');
+    }
+}
+
+function handleWebSocketMessage(message) {
+    console.log('WebSocket message received:', message);
+
+    switch (message.type) {
+        case 'NEW_BID':
+            handleNewBid(message.data);
+            break;
+
+        case 'AUCTION_ENDED':
+            handleAuctionEnded(message.data);
+            break;
+
+        case 'PRICE_UPDATE':
+            handlePriceUpdate(message.data);
+            break;
+
+        case 'ERROR':
+            console.error('WebSocket error message:', message.message);
+            showBidMessage(message.message || 'WebSocket error', 'error');
+            break;
+
+        default:
+            console.warn('Unknown WebSocket message type:', message.type);
+    }
+}
+
+function handleNewBid(bidData) {
+    console.log('New bid received:', bidData);
+
+    // Update current item data
+    if (currentItem) {
+        currentItem.currentPrice = bidData.amount;
+        currentItem.highestBidder = bidData.bidderName;
+        currentItem.highestBidderId = bidData.bidderId;
+        currentItem.bidCount = (currentItem.bidCount || 0) + 1;
+    }
+
+    // Update UI elements
+    const priceEl = document.getElementById('current-price');
+    if (priceEl) {
+        priceEl.textContent = `$${bidData.amount.toFixed(2)}`;
+        // Add flash animation
+        priceEl.classList.add('price-flash');
+        setTimeout(() => priceEl.classList.remove('price-flash'), 1000);
+    }
+
+    const bidCountEl = document.getElementById('bid-count');
+    if (bidCountEl && currentItem) {
+        bidCountEl.textContent = currentItem.bidCount;
+    }
+
+    const highestBidAmountEl = document.getElementById('highest-bid-amount');
+    if (highestBidAmountEl) {
+        highestBidAmountEl.textContent = `$${bidData.amount.toFixed(2)}`;
+    }
+
+    const highestBidderEl = document.getElementById('highest-bidder');
+    if (highestBidderEl) {
+        highestBidderEl.textContent = bidData.bidderName || 'Unknown';
+    }
+
+    // Update minimum bid
+    const minBid = bidData.amount + 0.01;
+    const minBidEl = document.getElementById('min-bid');
+    if (minBidEl) {
+        minBidEl.textContent = minBid.toFixed(2);
+    }
+
+    const bidAmountInput = document.getElementById('bid-amount');
+    if (bidAmountInput) {
+        bidAmountInput.min = minBid.toFixed(2);
+        bidAmountInput.placeholder = minBid.toFixed(2);
+    }
+
+    // Reload bid history to show new bid
+    loadBidHistory();
+
+    // Show notification if it's not the current user's bid
+    if (bidData.bidderId != userId) {
+        showBidNotification(`${bidData.bidderName} placed a bid of $${bidData.amount.toFixed(2)}`);
+    }
+}
+
+function handleAuctionEnded(data) {
+    console.log('Auction ended:', data);
+
+    // Update item status
+    if (currentItem) {
+        currentItem.status = 'ENDED';
+    }
+
+    // Reload to show ended state
+    loadItemDetails();
+
+    // Show notification
+    showBidNotification('This auction has ended!');
+}
+
+function handlePriceUpdate(data) {
+    console.log('Price update:', data);
+
+    if (currentItem) {
+        currentItem.currentPrice = data.currentPrice;
+        currentItem.highestBidder = data.highestBidder;
+        currentItem.bidCount = data.bidCount;
+    }
+
+    displayItemDetails(currentItem);
+}
+
+function updateConnectionStatus(status) {
+    const statusIndicator = document.getElementById('connection-status');
+    if (!statusIndicator) return;
+
+    statusIndicator.style.display = 'block';
+    statusIndicator.className = `connection-status ${status}`;
+
+    switch (status) {
+        case 'connected':
+            statusIndicator.textContent = '● Live';
+            statusIndicator.title = 'Real-time updates active';
+            break;
+        case 'disconnected':
+            statusIndicator.textContent = '● Reconnecting...';
+            statusIndicator.title = 'Attempting to reconnect';
+            break;
+        case 'error':
+            statusIndicator.textContent = '● Connection Error';
+            statusIndicator.title = 'WebSocket connection error';
+            break;
+        case 'failed':
+            statusIndicator.textContent = '● Offline';
+            statusIndicator.title = 'Connection failed - using polling';
+            break;
+    }
+}
+
+function showBidNotification(message) {
+    // Create notification element
+    const notification = document.createElement('div');
+    notification.className = 'bid-notification';
+    notification.textContent = message;
+
+    document.body.appendChild(notification);
+
+    // Trigger animation
+    setTimeout(() => notification.classList.add('show'), 10);
+
+    // Remove after 3 seconds
+    setTimeout(() => {
+        notification.classList.remove('show');
+        setTimeout(() => notification.remove(), 300);
+    }, 3000);
+}
+
+function showBidMessage(message, type) {
+    const messageEl = document.getElementById('bid-message');
+    if (!messageEl) {
+        // Fallback to console if element doesn't exist
+        console.log(`[${type}] ${message}`);
+        return;
+    }
+
+    messageEl.textContent = message;
+    messageEl.className = `bid-message ${type}`;
+    messageEl.style.display = 'block';
+
+    // Auto-hide after 5 seconds
+    setTimeout(() => {
+        messageEl.style.display = 'none';
+    }, 5000);
+}
+
+function showError(message) {
+    showBidMessage(message, 'error');
+}
+
 // ===== UTILITY FUNCTIONS =====
+// Robust parsing for endTime (supports ISO string or Java LocalDateTime array)
+function parseEndTimeToDate(endTime) {
+    if (!endTime) return null;
+
+    // If array format [year, month, day, hour, minute, second, nano]
+    if (Array.isArray(endTime) && endTime.length >= 3) {
+        return new Date(
+            endTime[0],
+            (endTime[1] || 1) - 1, // month -> 0-based
+            endTime[2],
+            endTime[3] || 0,
+            endTime[4] || 0,
+            endTime[5] || 0,
+            0
+        );
+    }
+
+    // If string (ISO) or numeric
+    const d = new Date(endTime);
+    if (!isNaN(d.getTime())) return d;
+
+    return null;
+}
+
 function getTimeRemaining(endTime) {
-    const now = new Date().getTime();
-    const end = new Date(endTime).getTime();
+    const endDate = parseEndTimeToDate(endTime);
+    if (!endDate) return 'Ended';
+
+    const now = Date.now();
+    const end = endDate.getTime();
     const distance = end - now;
-    
-    if (distance < 0) return 'Ended';
-    
+
+    if (isNaN(distance) || distance <= 0) return 'Ended';
+
     const days = Math.floor(distance / (1000 * 60 * 60 * 24));
     const hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
     const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
     const seconds = Math.floor((distance % (1000 * 60)) / 1000);
-    
+
     if (days > 0) {
         return `${days}d ${hours}h`;
     } else if (hours > 0) {
@@ -524,62 +811,10 @@ function getTimeRemaining(endTime) {
     }
 }
 
-function formatBidTime(timestamp) {
-	try {
-	        let date;
-	        
-	        // Handle Java LocalDateTime array format: [year, month, day, hour, minute, second, nano]
-	        if (Array.isArray(timestamp)) {
-	            // Month is 1-based in Java, but 0-based in JavaScript
-	            date = new Date(
-	                timestamp[0],        // year
-	                timestamp[1] - 1,    // month (subtract 1!)
-	                timestamp[2],        // day
-	                timestamp[3] || 0,   // hour
-	                timestamp[4] || 0,   // minute
-	                timestamp[5] || 0    // second
-	            );
-	        } else if (typeof timestamp === 'string') {
-	            // Handle ISO string format
-	            date = new Date(timestamp);
-	        } else {
-	            return 'Recently';
-	        }
-	        
-	        // Check if date is valid
-	        if (isNaN(date.getTime())) {
-	            console.error('Invalid date created from:', timestamp);
-	            return 'Recently';
-	        }
-	        
-	        // Format the date nicely
-	        return date.toLocaleString('en-US', {
-	            month: 'short',
-	            day: 'numeric',
-	            hour: 'numeric',
-	            minute: '2-digit',
-	            hour12: true
-	        });
-	        
-    } catch (e) {
-        console.error('Error parsing timestamp:', timestamp, e);
-        return 'Recently';
-    }
-}
-
-function showBidMessage(text, type) {
-    const messageDiv = document.getElementById('bid-message');
-    messageDiv.textContent = text;
-    messageDiv.className = `message ${type}`;
-    
-    // Auto-hide after 5 seconds
-    setTimeout(() => {
-        messageDiv.textContent = '';
-        messageDiv.className = 'message';
-    }, 5000);
-}
-
-function showError(message) {
-    alert(message);
-    window.location.href = '/catalogue.html';
+// Helper to return total hours remaining as a number (used by status logic)
+function getHoursRemaining(endTime) {
+    const endDate = parseEndTimeToDate(endTime);
+    if (!endDate) return 0;
+    const ms = endDate.getTime() - Date.now();
+    return Math.max(0, ms / (1000 * 60 * 60));
 }

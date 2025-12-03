@@ -9,18 +9,21 @@
 </head>
 <body>
     <!-- Navigation Bar -->
-    <nav class="navbar">
-        <div class="nav-container">
-            <div class="nav-brand">
-                <h2>BlockBid</h2>
-            </div>
-            <div class="nav-menu">
-                <span class="nav-user">Welcome, <strong id="username-display"></strong></span>
-                <button class="btn btn-secondary" onclick="location.href='/seller.html'">Sell Item</button>
-                <button class="btn btn-outline" id="logout-btn">Logout</button>
-            </div>
-        </div>
-    </nav>
+	<nav class="navbar">
+	    <div class="nav-container">
+	        <div class="nav-brand">
+	            <h2 onclick="location.href='/catalogue.html'" style="cursor: pointer;">BlockBid</h2>
+	        </div>
+	        <div class="nav-menu">
+	            <a href="/catalogue.html" class="nav-link">Browse</a>
+	            <a href="/seller.html" class="nav-link">Sell Item</a>
+	            <a href="/my-bids.html" class="nav-link">My Bids</a>
+	            <a href="/my-listings.html" class="nav-link">My Listings</a>
+	            <span class="nav-user">Welcome, <strong id="username-display"></strong></span>
+	            <button class="btn btn-outline" id="logout-btn">Logout</button>
+	        </div>
+	    </div>
+	</nav>
 
     <div class="container">
         <!-- Search Section -->
@@ -45,6 +48,28 @@
                 <label>
                     <input type="radio" name="status" value="ending-soon"> Ending Soon
                 </label>
+            </div>
+            <div class="filters">
+                <label for="category-filter">Category:</label>
+                <select id="category-filter">
+                    <option value="all">All Categories</option>
+                    <option value="electronics">Electronics</option>
+                    <option value="clothing">Clothing</option>
+                    <option value="home">Home & Garden</option>
+                    <option value="sports">Sports</option>
+                    <option value="books">Books</option>
+                    <option value="collectibles">Collectibles</option>
+                    <option value="automotive">Automotive</option>
+                    <option value="other">Other</option>
+                </select>
+                
+                <label for="sort-by">Sort By:</label>
+                <select id="sort-by">
+                    <option value="newest">Newest First</option>
+                    <option value="ending">Ending Soon</option>
+                    <option value="price-low">Price: Low to High</option>
+                    <option value="price-high">Price: High to Low</option>
+                </select>
             </div>
         </section>
 

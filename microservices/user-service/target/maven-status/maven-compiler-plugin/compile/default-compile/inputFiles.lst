@@ -1,6 +1,7 @@
 /Users/kylewilliamson/Documents/blockbid-auction/microservices/user-service/src/main/java/com/blockbid/userservice/service/UserService.java
 /Users/kylewilliamson/Documents/blockbid-auction/microservices/user-service/src/main/java/com/blockbid/userservice/config/JwtUtils.java
 /Users/kylewilliamson/Documents/blockbid-auction/microservices/user-service/src/main/java/com/blockbid/userservice/UserServiceApplication.java
+/Users/kylewilliamson/Documents/blockbid-auction/microservices/user-service/src/main/java/com/blockbid/userservice/validation/UserValidator.java
 /Users/kylewilliamson/Documents/blockbid-auction/microservices/user-service/src/main/java/com/blockbid/userservice/config/SecurityConfig.java
 /Users/kylewilliamson/Documents/blockbid-auction/microservices/user-service/src/main/java/com/blockbid/userservice/controller/UserController.java
 /Users/kylewilliamson/Documents/blockbid-auction/microservices/user-service/src/main/java/com/blockbid/userservice/repository/UserRepository.java

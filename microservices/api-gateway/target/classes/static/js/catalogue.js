@@ -1,3 +1,5 @@
+const catalogueTimers = new Map();
+
 // ===== CHECK AUTHENTICATION =====
 const token = localStorage.getItem('token');
 const userId = localStorage.getItem('userId');
@@ -17,9 +19,68 @@ document.getElementById('logout-btn').addEventListener('click', () => {
     window.location.href = '/';
 });
 
+
 // ===== GLOBAL VARIABLES =====
 let allItems = [];
 let currentFilter = 'all';
+let currentCategory = 'all';
+let currentSort = 'newest';
+
+// ===== SEARCH VALIDATION =====
+function validateSearchKeyword(keyword) {
+    if (!keyword || keyword.trim().length === 0) {
+        return { valid: false, error: 'Please enter a search term' };
+    }
+    
+    if (keyword.trim().length < 2) {
+        return { valid: false, error: 'Search term must be at least 2 characters' };
+    }
+    
+    if (keyword.trim().length > 100) {
+        return { valid: false, error: 'Search term is too long (max 100 characters)' };
+    }
+    
+    return { valid: true };
+}
+
+function showSearchError(message) {
+    const searchInput = document.getElementById('search-input');
+    searchInput.style.borderColor = '#dc2626';
+    
+    const existingError = searchInput.parentElement.querySelector('.search-error');
+    if (existingError) {
+        existingError.remove();
+    }
+    
+    const errorDiv = document.createElement('div');
+    errorDiv.className = 'search-error';
+    errorDiv.style.color = '#dc2626';
+    errorDiv.style.fontSize = '0.85rem';
+    errorDiv.style.marginTop = '5px';
+    errorDiv.textContent = message;
+    
+    searchInput.parentElement.appendChild(errorDiv);
+    
+    // Auto-clear after 3 seconds
+    setTimeout(() => {
+        const error = searchInput.parentElement.querySelector('.search-error');
+        if (error) {
+            error.remove();
+            searchInput.style.borderColor = '';
+        }
+    }, 3000);
+}
+
+function clearSearchError() {
+    const searchInput = document.getElementById('search-input');
+    const existingError = searchInput.parentElement.querySelector('.search-error');
+    
+    if (existingError) {
+        existingError.remove();
+    }
+    
+    searchInput.style.borderColor = '';
+}
 
 // ===== LOAD ITEMS ON PAGE LOAD =====
 window.addEventListener('DOMContentLoaded', () => {
@@ -28,13 +89,35 @@ window.addEventListener('DOMContentLoaded', () => {
 
 // ===== SEARCH FUNCTIONALITY =====
 document.getElementById('search-btn').addEventListener('click', () => {
+    console.log('=== SEARCH BUTTON CLICKED ===');
+    clearSearchError();
+    
     const keyword = document.getElementById('search-input').value.trim();
-    if (keyword) {
-        searchItems(keyword);
-    } else {
+    console.log('Raw input value:', document.getElementById('search-input').value);
+    console.log('Trimmed keyword:', keyword);
+    console.log('Keyword length:', keyword.length);
+    
+    if (!keyword) {
+        console.log('Empty search - loading all items');
         loadItems();
+        return;
     }
+    
+    const validation = validateSearchKeyword(keyword);
+    console.log('Validation result:', validation);
+    
+    if (!validation.valid) {
+        console.log('Validation failed:', validation.error);
+        showSearchError(validation.error);
+        return;
+    }
+    
+    console.log('Starting search with keyword:', keyword);
+    searchItems(keyword);
 });
+
+// Clear error on input
+document.getElementById('search-input').addEventListener('input', clearSearchError);
 
 // Search on Enter key
 document.getElementById('search-input').addEventListener('keypress', (e) => {
@@ -57,57 +140,108 @@ document.querySelectorAll('input[name="status"]').forEach(radio => {
     });
 });
 
+// Category filter
+document.getElementById('category-filter').addEventListener('change', (e) => {
+    currentCategory = e.target.value;
+    filterItems();
+});
+
+// Sort dropdown
+document.getElementById('sort-by').addEventListener('change', (e) => {
+    currentSort = e.target.value;
+    filterItems();
+});
+
 // ===== LOAD ALL ITEMS =====
 async function loadItems() {
+    console.log('=== LOAD ALL ITEMS DEBUG START ===');
+    console.log('Token exists:', !!token);
+    
     showLoading(true);
     
     try {
-        const response = await fetch('/api/items', {
+        const url = '/api/items';
+        console.log('Loading from URL:', url);
+        
+        const response = await fetch(url, {
             headers: {
                 'Authorization': `Bearer ${token}`
             }
         });
         
+        console.log('Response status:', response.status);
+        console.log('Response ok:', response.ok);
+        
         if (response.ok) {
             allItems = await response.json();
+            console.log('Items loaded:', allItems.length);
+            console.log('First item:', allItems[0]);
             filterItems();
         } else if (response.status === 401) {
-            // Token expired or invalid
+            console.error('Authentication failed - clearing storage and redirecting');
             localStorage.clear();
             window.location.href = '/';
         } else {
+            console.error('Load items failed:', response.status);
+            const errorText = await response.text();
+            console.error('Error response:', errorText);
             showNoResults();
         }
     } catch (error) {
-        console.error('Error loading items:', error);
+        console.error('Load items error:', error);
+        console.error('Error stack:', error.stack);
         showNoResults();
     } finally {
         showLoading(false);
+        console.log('=== LOAD ALL ITEMS DEBUG END ===');
     }
 }
 
 // ===== SEARCH ITEMS =====
 async function searchItems(keyword) {
+    console.log('=== SEARCH DEBUG START ===');
+    console.log('Search keyword:', keyword);
+    console.log('Token exists:', !!token);
+    console.log('Token value:', token ? token.substring(0, 20) + '...' : 'NO TOKEN');
+    
     showLoading(true);
     
     try {
-        const response = await fetch(`/api/items/search?keyword=${encodeURIComponent(keyword)}`, {
+        const url = `/api/items/search?keyword=${encodeURIComponent(keyword)}`;
+        console.log('Search URL:', url);
+        
+        const response = await fetch(url, {
             headers: {
                 'Authorization': `Bearer ${token}`
             }
         });
         
+        console.log('Response status:', response.status);
+        console.log('Response ok:', response.ok);
+        console.log('Response headers:', response.headers);
+        
         if (response.ok) {
-            allItems = await response.json();
+            const items = await response.json();
+            console.log('Items received:', items.length);
+            console.log('First item:', items[0]);
+            
+            allItems = items;
             filterItems();
+            
+            console.log('Search successful - displaying', items.length, 'items');
         } else {
+            console.error('Search failed with status:', response.status);
+            const errorText = await response.text();
+            console.error('Error response:', errorText);
             showNoResults();
         }
     } catch (error) {
-        console.error('Error searching items:', error);
+        console.error('Search error:', error);
+        console.error('Error stack:', error.stack);
         showNoResults();
     } finally {
         showLoading(false);
+        console.log('=== SEARCH DEBUG END ===');
     }
 }
 
@@ -115,18 +249,42 @@ async function searchItems(keyword) {
 function filterItems() {
     let filteredItems = allItems;
     
+    // Filter by status
     if (currentFilter === 'active') {
-        filteredItems = allItems.filter(item => item.status === 'ACTIVE');
+        filteredItems = filteredItems.filter(item => item.status === 'ACTIVE');
     } else if (currentFilter === 'ending-soon') {
-        // Items ending within 24 hours
         const oneDayFromNow = new Date(Date.now() + 24 * 60 * 60 * 1000);
-        filteredItems = allItems.filter(item => {
+        filteredItems = filteredItems.filter(item => {
             const endTime = new Date(item.endTime);
             return item.status === 'ACTIVE' && endTime <= oneDayFromNow;
         });
     }
     
+    // Filter by category
+    if (currentCategory !== 'all') {
+        filteredItems = filteredItems.filter(item => item.category === currentCategory);
+    }
+    
+    // Sort items
+    filteredItems = sortItems(filteredItems, currentSort);
+    
     displayItems(filteredItems);
+}
+
+function sortItems(items, sortBy) {
+    const sorted = [...items];
+    
+    switch(sortBy) {
+        case 'price-low':
+            return sorted.sort((a, b) => a.currentPrice - b.currentPrice);
+        case 'price-high':
+            return sorted.sort((a, b) => b.currentPrice - a.currentPrice);
+        case 'ending':
+            return sorted.sort((a, b) => new Date(a.endTime) - new Date(b.endTime));
+        case 'newest':
+        default:
+            return sorted.sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0));
+    }
 }
 
 // ===== DISPLAY ITEMS =====
@@ -153,9 +311,8 @@ function displayItems(items) {
 
 // ===== CREATE ITEM CARD HTML =====
 function createItemCard(item) {
-    const timeRemaining = getTimeRemaining(item.endTime);
-    const statusClass = getStatusClass(item.status, timeRemaining);
-    const statusText = getStatusText(item.status, timeRemaining);
+    const statusClass = getStatusClass(item.status, item.endTime);
+    const statusText = getStatusText(item.status, item.endTime);
     
     return `
         <div class="item-card" onclick="viewItem(${item.id})">
@@ -172,7 +329,7 @@ function createItemCard(item) {
                 </div>
                 ${item.status === 'ACTIVE' ? `
                     <div class="item-timer" id="timer-${item.id}">
-                        Time: ${timeRemaining}
+                        Time: ${getTimeRemaining(item.endTime)}
                     </div>
                 ` : ''}
                 <div class="item-actions">
@@ -189,7 +346,13 @@ function createItemCard(item) {
 function startTimer(itemId, endTime) {
     const timerElement = document.getElementById(`timer-${itemId}`);
     if (!timerElement) return;
-    
+
+    // clear existing timer for this item
+    if (catalogueTimers.has(itemId)) {
+        clearInterval(catalogueTimers.get(itemId));
+        catalogueTimers.delete(itemId);
+    }
+
     const updateTimer = () => {
         const now = new Date().getTime();
         const end = new Date(endTime).getTime();
@@ -208,7 +371,8 @@ function startTimer(itemId, endTime) {
     };
     
     updateTimer();
-    setInterval(updateTimer, 1000);
+    const handle = setInterval(updateTimer, 1000);
+    catalogueTimers.set(itemId, handle);
 }
 
 // ===== UTILITY FUNCTIONS =====
@@ -230,19 +394,25 @@ function getTimeRemaining(endTime) {
     return `${hours}h ${minutes}m`;
 }
 
-function getStatusClass(status, timeRemaining) {
+function getStatusClass(status, itemEndTime) {
     if (status !== 'ACTIVE') return 'status-ended';
     
-    const hours = parseInt(timeRemaining);
-    if (hours <= 24) return 'status-ending';
+    const now = new Date().getTime();
+    const end = new Date(itemEndTime).getTime();
+    const hoursRemaining = (end - now) / (1000 * 60 * 60);
+    
+    if (hoursRemaining <= 24 && hoursRemaining > 0) return 'status-ending';
     return 'status-active';
 }
 
-function getStatusText(status, timeRemaining) {
+function getStatusText(status, itemEndTime) {
     if (status !== 'ACTIVE') return 'Ended';
     
-    const hours = parseInt(timeRemaining);
-    if (hours <= 24) return 'Ending Soon';
+    const now = new Date().getTime();
+    const end = new Date(itemEndTime).getTime();
+    const hoursRemaining = (end - now) / (1000 * 60 * 60);
+    
+    if (hoursRemaining <= 24 && hoursRemaining > 0) return 'Ending Soon';
     return 'Active';
 }
 

@@ -98,22 +98,25 @@ function displayOrderSummary(order) {
 
 // ===== LOAD USER ADDRESS =====
 async function loadUserAddress() {
-    try {
-        const response = await fetch(`/api/users/${userId}`, {
-            headers: { 'Authorization': `Bearer ${token}` }
-        });
-        
-        if (response.ok) {
-            const user = await response.json();
-            document.getElementById('shipping-address').textContent = 
-                `${user.streetNumber} ${user.streetName}, ${user.city}, ${user.province}, ${user.country} ${user.postalCode}`;
-        } else {
-            document.getElementById('shipping-address').textContent = 'Address not available';
-        }
-    } catch (error) {
-        console.error('Error loading address:', error);
-        document.getElementById('shipping-address').textContent = 'Error loading address';
-    }
+	try {
+	        const response = await fetch(`/api/users/${userId}`, {
+	            headers: { 'Authorization': `Bearer ${token}` }
+	        });
+	        
+	        if (response.ok) {
+	            const user = await response.json();
+	            
+	            // Populate individual address fields
+	            document.getElementById('street-number').value = user.streetNumber || '';
+	            document.getElementById('street-name').value = user.streetName || '';
+	            document.getElementById('city').value = user.city || '';
+	            document.getElementById('province').value = user.province || '';
+	            document.getElementById('postal-code').value = user.postalCode || '';
+	            document.getElementById('country').value = user.country || 'Canada';
+	        }
+	    } catch (error) {
+	        console.error('Error loading address:', error);
+	    }
 }
 
 // ===== SETUP SHIPPING OPTIONS =====

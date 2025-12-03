@@ -217,7 +217,7 @@ public class AuctionController {
                 
                 // Try to fetch bidder name from user service
                 try {
-                    String userServiceUrl = "http://user-service:8081/users/" + bid.getBidderId();
+                    String userServiceUrl = "http://user-service:8081/internal/users/" + bid.getBidderId();
                     Map<String, Object> user = restTemplate.getForObject(userServiceUrl, Map.class);
                     if (user != null && user.get("username") != null) {
                         bidMap.put("bidderName", user.get("username"));
@@ -304,6 +304,58 @@ public class AuctionController {
         }
     }
     
+    // Get seller's auctions
+    @GetMapping("/seller/{sellerId}")
+    public ResponseEntity<?> getSellerAuctions(@PathVariable Long sellerId) {
+        try {
+            List<Auction> auctions = auctionService.getSellerAuctions(sellerId);
+
+            // Enhance with item details
+            List<Map<String, Object>> enhancedAuctions = new ArrayList<>();
+
+            for (Auction auction : auctions) {
+                try {
+                    // Fetch item details from item service
+                    String itemServiceUrl = "http://item-service:8082/" + auction.getItemId();
+                    Map<String, Object> item = restTemplate.getForObject(itemServiceUrl, Map.class);
+
+                    if (item != null) {
+                        Map<String, Object> auctionData = new HashMap<>();
+                        auctionData.put("itemId", auction.getItemId());
+                        auctionData.put("name", item.get("name"));
+                        auctionData.put("description", item.get("description"));
+                        auctionData.put("startingPrice", auction.getStartingPrice());
+                        auctionData.put("currentPrice", auction.getCurrentPrice());
+                        auctionData.put("status", auction.getStatus());
+                        auctionData.put("totalBids", auction.getTotalBids());
+                        auctionData.put("endTime", auction.getEndTime());
+
+                        enhancedAuctions.add(auctionData);
+                    }
+                } catch (Exception e) {
+                    System.err.println("Failed to fetch item details for itemId " + auction.getItemId() + ": " + e.getMessage());
+                    // Include auction anyway with minimal data
+                    Map<String, Object> auctionData = new HashMap<>();
+                    auctionData.put("itemId", auction.getItemId());
+                    auctionData.put("name", "Item #" + auction.getItemId());
+                    auctionData.put("startingPrice", auction.getStartingPrice());
+                    auctionData.put("currentPrice", auction.getCurrentPrice());
+                    auctionData.put("status", auction.getStatus());
+                    auctionData.put("totalBids", auction.getTotalBids());
+                    auctionData.put("endTime", auction.getEndTime());
+
+                    enhancedAuctions.add(auctionData);
+                }
+            }
+
+            return ResponseEntity.ok(enhancedAuctions);
+        } catch (Exception e) {
+            Map<String, String> error = new HashMap<>();
+            error.put("message", e.getMessage());
+            return ResponseEntity.badRequest().body(error);
+        }
+    }
+
     @GetMapping("/health")
     public ResponseEntity<?> healthCheck() {
         Map<String, String> response = new HashMap<>();

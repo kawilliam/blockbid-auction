@@ -27,7 +27,22 @@ public class User {
     private String email;
     
     @Column(nullable = false)
-    private String address;
+    private String streetNumber;
+    
+    @Column(nullable = false)
+    private String streetName;
+    
+    @Column(nullable = false)
+    private String city;
+    
+    @Column(nullable = false)
+    private String province;
+    
+    @Column(nullable = false)
+    private String postalCode;
+    
+    @Column(nullable = false)
+    private String country;
     
     @Column(nullable = false)
     private LocalDateTime createdAt;
@@ -41,13 +56,20 @@ public class User {
     public User() {}
     
     public User(String username, String password, String firstName, 
-                String lastName, String email, String address) {
+                String lastName, String email, String streetNumber, 
+                String streetName, String city, String province, 
+                String postalCode, String country) {
         this.username = username;
         this.password = password;
         this.firstName = firstName;
         this.lastName = lastName;
         this.email = email;
-        this.address = address;
+        this.streetNumber = streetNumber;
+        this.streetName = streetName;
+        this.city = city;
+        this.province = province;
+        this.postalCode = postalCode;
+        this.country = country;
     }
     
     // Getters and Setters
@@ -69,8 +91,23 @@ public class User {
     public String getEmail() { return email; }
     public void setEmail(String email) { this.email = email; }
     
-    public String getAddress() { return address; }
-    public void setAddress(String address) { this.address = address; }
+    public String getStreetNumber() { return streetNumber; }
+    public void setStreetNumber(String streetNumber) { this.streetNumber = streetNumber; }
+    
+    public String getStreetName() { return streetName; }
+    public void setStreetName(String streetName) { this.streetName = streetName; }
+    
+    public String getCity() { return city; }
+    public void setCity(String city) { this.city = city; }
+    
+    public String getProvince() { return province; }
+    public void setProvince(String province) { this.province = province; }
+    
+    public String getPostalCode() { return postalCode; }
+    public void setPostalCode(String postalCode) { this.postalCode = postalCode; }
+    
+    public String getCountry() { return country; }
+    public void setCountry(String country) { this.country = country; }
     
     public LocalDateTime getCreatedAt() { return createdAt; }
     public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }

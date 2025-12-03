@@ -34,8 +34,26 @@ public class Payment {
     @Column(nullable = false)
     private String shippingType = "standard"; // standard, expedited
     
-    @Column(nullable = false, length = 500)
+    @Column(columnDefinition = "TEXT")
     private String shippingAddress;
+    
+    @Column(nullable = false)
+    private String streetNumber;
+    
+    @Column(nullable = false)
+    private String streetName;
+    
+    @Column(nullable = false)
+    private String city;
+    
+    @Column(nullable = false)
+    private String province;
+    
+    @Column(nullable = false)
+    private String postalCode;
+    
+    @Column(nullable = false)
+    private String country;
     
     @Column(nullable = false)
     private String status = "PENDING"; // PENDING, COMPLETED, FAILED, REFUNDED
@@ -70,7 +88,9 @@ public class Payment {
     // Constructors
     public Payment() {}
     
-    public Payment(Long itemId, Long userId, Double totalAmount, String shippingAddress) {
+    public Payment(Long itemId, Long userId, Double totalAmount, String streetNumber, 
+            String streetName, String city, String province, 
+            String postalCode, String country) {
         this.itemId = itemId;
         this.userId = userId;
         this.totalAmount = totalAmount;
@@ -127,6 +147,24 @@ public class Payment {
     
     public String getPaymentMethod() { return paymentMethod; }
     public void setPaymentMethod(String paymentMethod) { this.paymentMethod = paymentMethod; }
+    
+    public String getStreetNumber() { return streetNumber; }
+    public void setStreetNumber(String streetNumber) { this.streetNumber = streetNumber; }
+    
+    public String getStreetName() { return streetName; }
+    public void setStreetName(String streetName) { this.streetName = streetName; }
+    
+    public String getCity() { return city; }
+    public void setCity(String city) { this.city = city; }
+    
+    public String getProvince() { return province; }
+    public void setProvince(String province) { this.province = province; }
+    
+    public String getPostalCode() { return postalCode; }
+    public void setPostalCode(String postalCode) { this.postalCode = postalCode; }
+    
+    public String getCountry() { return country; }
+    public void setCountry(String country) { this.country = country; }
     
     // Helper methods
     public boolean isCompleted() {

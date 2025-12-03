@@ -1,4 +1,7 @@
+com/blockbid/apigateway/websocket/WebSocketProxyHandler$BackendWebSocketHandler.class
 com/blockbid/apigateway/controller/ApiProxyController.class
 com/blockbid/apigateway/config/WebClientConfig.class
 com/blockbid/apigateway/ApiGatewayApplication.class
+com/blockbid/apigateway/websocket/WebSocketProxyHandler.class
+com/blockbid/apigateway/config/WebSocketProxyConfig.class
 com/blockbid/apigateway/controller/FrontendController.class

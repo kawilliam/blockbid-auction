@@ -1,7 +1,10 @@
+/Users/kylewilliamson/Documents/blockbid-auction/microservices/auction-service/src/main/java/com/blockbid/auctionservice/websocket/AuctionWebSocketHandler.java
 /Users/kylewilliamson/Documents/blockbid-auction/microservices/auction-service/src/main/java/com/blockbid/auctionservice/entity/Auction.java
 /Users/kylewilliamson/Documents/blockbid-auction/microservices/auction-service/src/main/java/com/blockbid/auctionservice/repository/BidRepository.java
+/Users/kylewilliamson/Documents/blockbid-auction/microservices/auction-service/src/main/java/com/blockbid/auctionservice/config/WebSocketConfig.java
 /Users/kylewilliamson/Documents/blockbid-auction/microservices/auction-service/src/main/java/com/blockbid/auctionservice/repository/AuctionRepository.java
 /Users/kylewilliamson/Documents/blockbid-auction/microservices/auction-service/src/main/java/com/blockbid/auctionservice/controller/AuctionController.java
+/Users/kylewilliamson/Documents/blockbid-auction/microservices/auction-service/src/main/java/com/blockbid/auctionservice/validation/BidValidator.java
 /Users/kylewilliamson/Documents/blockbid-auction/microservices/auction-service/src/main/java/com/blockbid/auctionservice/service/AuctionService.java
 /Users/kylewilliamson/Documents/blockbid-auction/microservices/auction-service/src/main/java/com/blockbid/auctionservice/entity/Bid.java
 /Users/kylewilliamson/Documents/blockbid-auction/microservices/auction-service/src/main/java/com/blockbid/auctionservice/AuctionServiceApplication.java

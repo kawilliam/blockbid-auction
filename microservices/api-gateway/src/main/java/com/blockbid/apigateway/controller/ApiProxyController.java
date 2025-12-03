@@ -23,102 +23,123 @@ public class ApiProxyController {
     // User Service Proxy
     @RequestMapping("/api/users/**")
     public ResponseEntity<?> proxyUserService(HttpServletRequest request, 
-                                             @RequestBody(required = false) Map<String, Object> body) {
+                                             @RequestBody(required = false) Map<String, Object> body,
+                                             @RequestHeader(value = "Authorization", required = false) String authHeader) {
         String path = request.getRequestURI().replace("/api/users", "");
         if (path.isEmpty()) path = "/";
         
-        return proxyRequest("http://user-service:8081" + path, request.getMethod(), body);
+        return proxyRequest("http://user-service:8081" + path, request.getMethod(), body, null);
     }
 
     // Item Service Proxy  
     @RequestMapping("/api/items/**")
     public ResponseEntity<?> proxyItemService(HttpServletRequest request, 
-                                             @RequestBody(required = false) Map<String, Object> body) {
+                                             @RequestBody(required = false) Map<String, Object> body,
+                                             @RequestHeader(value = "Authorization", required = false) String authHeader) {
         String path = request.getRequestURI().replace("/api/items", "");
         if (path.isEmpty()) path = "/";
         
-        return proxyRequest("http://item-service:8082" + path, request.getMethod(), body);
+        return proxyRequest("http://item-service:8082" + path, request.getMethod(), body, authHeader);
     }
 
     // Auction Service Proxy
     @RequestMapping("/api/auctions/**")
     public ResponseEntity<?> proxyAuctionService(HttpServletRequest request, 
-                                                @RequestBody(required = false) Map<String, Object> body) {
+                                                @RequestBody(required = false) Map<String, Object> body,
+                                                @RequestHeader(value = "Authorization", required = false) String authHeader) {
         String path = request.getRequestURI().replace("/api/auctions", "");
         if (path.isEmpty()) path = "/";
         
-        return proxyRequest("http://auction-service:8083" + path, request.getMethod(), body);
+        return proxyRequest("http://auction-service:8083" + path, request.getMethod(), body, authHeader);
     }
 
     // Payment Service Proxy
     @RequestMapping("/api/payments/**")
     public ResponseEntity<?> proxyPaymentService(HttpServletRequest request, 
-                                                @RequestBody(required = false) Map<String, Object> body) {
+                                                @RequestBody(required = false) Map<String, Object> body,
+                                                @RequestHeader(value = "Authorization", required = false) String authHeader) {
         String path = request.getRequestURI().replace("/api/payments", "");
         if (path.isEmpty()) path = "/";
         
-        return proxyRequest("http://payment-service:8084" + path, request.getMethod(), body);
+        return proxyRequest("http://payment-service:8084" + path, request.getMethod(), body, authHeader);
     }
 
     // Blockchain Service Proxy
     @RequestMapping("/api/blockchain/**")
     public ResponseEntity<?> proxyBlockchainService(HttpServletRequest request, 
-                                                   @RequestBody(required = false) Map<String, Object> body) {
+                                                   @RequestBody(required = false) Map<String, Object> body,
+                                                   @RequestHeader(value = "Authorization", required = false) String authHeader) {
         String path = request.getRequestURI().replace("/api/blockchain", "");
         if (path.isEmpty()) path = "/";
         
-        return proxyRequest("http://blockchain-service:8085" + path, request.getMethod(), body);
+        return proxyRequest("http://blockchain-service:8085" + path, request.getMethod(), body, authHeader);
     }
 
     // ===== SINGLE proxyRequest METHOD =====
-    private ResponseEntity<?> proxyRequest(String url, String method, Map<String, Object> body) {
+    private ResponseEntity<?> proxyRequest(String url, String method, Map<String, Object> body, String authHeader) {
         try {
             WebClient webClient = webClientBuilder.build();
             
             Mono<ResponseEntity<Object>> response;
             
             switch (method.toUpperCase()) {
-                case "GET":
-                    response = webClient.get()
-                        .uri(url)
-                        .retrieve()
-                        .onStatus(status -> status.is4xxClientError() || status.is5xxServerError(),
-                            clientResponse -> clientResponse.bodyToMono(String.class)
-                                .map(errorBody -> new RuntimeException(errorBody)))
-                        .toEntity(Object.class);
-                    break;
+	            case "GET":
+	                WebClient.RequestHeadersSpec<?> getSpec = webClient.get().uri(url);
+	                if (authHeader != null) {
+	                    getSpec = getSpec.header("Authorization", authHeader);
+	                }
+	                response = getSpec
+	                    .retrieve()
+	                    .onStatus(status -> status.is4xxClientError() || status.is5xxServerError(),
+	                        clientResponse -> clientResponse.bodyToMono(String.class)
+	                            .map(errorBody -> new RuntimeException(errorBody)))
+	                    .toEntity(Object.class);
+	                break;
                     
-                case "POST":
-                    response = webClient.post()
-                        .uri(url)
-                        .bodyValue(body != null ? body : new HashMap<>())
-                        .retrieve()
-                        .onStatus(status -> status.is4xxClientError() || status.is5xxServerError(),
-                            clientResponse -> clientResponse.bodyToMono(String.class)
-                                .map(errorBody -> new RuntimeException(errorBody)))
-                        .toEntity(Object.class);
-                    break;
+	            case "POST":
+	                WebClient.RequestHeadersSpec<?> postSpec = webClient.post()
+	                    .uri(url)
+	                    .bodyValue(body != null ? body : new HashMap<>());
+	                if (authHeader != null) {
+	                    postSpec = postSpec.header("Authorization", authHeader);
+	                }
+	                response = postSpec
+	                    .retrieve()
+	                    .onStatus(status -> status.is4xxClientError() || status.is5xxServerError(),
+	                        clientResponse -> clientResponse.bodyToMono(String.class)
+	                            .map(errorBody -> new RuntimeException(errorBody)))
+	                    .toEntity(Object.class);
+	                break;
                     
                 case "PUT":
-                    response = webClient.put()
-                        .uri(url)
-                        .bodyValue(body != null ? body : new HashMap<>())
-                        .retrieve()
-                        .onStatus(status -> status.is4xxClientError() || status.is5xxServerError(),
-                            clientResponse -> clientResponse.bodyToMono(String.class)
-                                .map(errorBody -> new RuntimeException(errorBody)))
-                        .toEntity(Object.class);
-                    break;
+                	WebClient.RequestHeadersSpec<?> putSpec = webClient.put()
+	                    .uri(url)
+	                    .bodyValue(body != null ? body : new HashMap<>());
+	                if (authHeader != null) {
+	                    putSpec = putSpec.header("Authorization", authHeader);
+	                }
+	                response = putSpec
+	                    .retrieve()
+	                    .onStatus(status -> status.is4xxClientError() || status.is5xxServerError(),
+	                        clientResponse -> clientResponse.bodyToMono(String.class)
+	                            .map(errorBody -> new RuntimeException(errorBody)))
+	                    .toEntity(Object.class);
+	                break;
                     
                 case "DELETE":
-                    response = webClient.delete()
-                        .uri(url)
-                        .retrieve()
-                        .onStatus(status -> status.is4xxClientError() || status.is5xxServerError(),
-                            clientResponse -> clientResponse.bodyToMono(String.class)
-                                .map(errorBody -> new RuntimeException(errorBody)))
-                        .toEntity(Object.class);
-                    break;
+                	WebClient.RequestHeadersSpec<?> deleteSpec = webClient.put()
+	                    .uri(url)
+	                    .bodyValue(body != null ? body : new HashMap<>());
+	                if (authHeader != null) {
+	                    deleteSpec = deleteSpec.header("Authorization", authHeader);
+	                }
+	                response = deleteSpec
+	                    .retrieve()
+	                    .onStatus(status -> status.is4xxClientError() || status.is5xxServerError(),
+	                        clientResponse -> clientResponse.bodyToMono(String.class)
+	                            .map(errorBody -> new RuntimeException(errorBody)))
+	                    .toEntity(Object.class);
+	                break;
                     
                 default:
                     Map<String, String> error = new HashMap<>();
