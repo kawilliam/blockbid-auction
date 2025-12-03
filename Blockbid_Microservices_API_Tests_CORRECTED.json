@@ -1,0 +1,1771 @@
+{
+	"info": {
+		"_postman_id": "2a483d0d-9886-4052-899f-66082b6e7295",
+		"name": "Blockbid Microservices API Tests (CORRECTED)",
+		"description": "Complete API test suite for BlockBid containerized microservices architecture.\nTests all 6 services including UC8 blockchain advanced feature.\nDemonstrates full auction lifecycle from user registration to payment.\n\n🔧 CORRECTED VERSION - All issues fixed:\n- User registration with proper address fields\n- Correct HTTP status codes\n- Fixed endpoint paths\n- Accurate response assertions",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "48421203"
+	},
+	"item": [
+		{
+			"name": "01 - User Service (Authentication)",
+			"item": [
+				{
+					"name": "User Registration (UC1.1)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"User registration successful\", function () {",
+									"    pm.response.to.have.status(200);",
+									"    pm.expect(pm.response.json()).to.have.property(\"message\");",
+									"    pm.expect(pm.response.json()).to.have.property(\"userId\");",
+									"});",
+									"",
+									"pm.test(\"Response time is acceptable\", function () {",
+									"    pm.expect(pm.response.responseTime).to.be.below(2000);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"username\": \"testuser\",\n  \"password\": \"password123\",\n  \"firstName\": \"John\",\n  \"lastName\": \"Doe\",\n  \"email\": \"john.doe@example.com\",\n  \"streetNumber\": \"123\",\n  \"streetName\": \"Main Street\",\n  \"city\": \"Toronto\",\n  \"province\": \"ON\",\n  \"postalCode\": \"M5H2N2\",\n  \"country\": \"Canada\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://localhost:8081/signup",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8081",
+							"path": [
+								"signup"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Second User Registration",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"User registration successful\", function () {",
+									"    pm.response.to.have.status(200);",
+									"    pm.expect(pm.response.json()).to.have.property(\"message\");",
+									"    pm.expect(pm.response.json()).to.have.property(\"userId\");",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"username\": \"testuser2\",\n  \"password\": \"password123\",\n  \"firstName\": \"Jane\",\n  \"lastName\": \"Smith\",\n  \"email\": \"jane.smith@example.com\",\n  \"streetNumber\": \"456\",\n  \"streetName\": \"Oak Avenue\",\n  \"city\": \"Toronto\",\n  \"province\": \"ON\",\n  \"postalCode\": \"M4B1B3\",\n  \"country\": \"Canada\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://localhost:8081/signup",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8081",
+							"path": [
+								"signup"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "User Login (UC1.2)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Login successful\", function () {",
+									"    pm.response.to.have.status(200);",
+									"    pm.expect(pm.response.json()).to.have.property(\"token\");",
+									"    pm.expect(pm.response.json()).to.have.property(\"userId\");",
+									"});",
+									"",
+									"// Save token for later use",
+									"pm.test(\"Save JWT token\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    if (jsonData.token) {",
+									"        pm.collectionVariables.set(\"jwt_token\", jsonData.token);",
+									"        pm.collectionVariables.set(\"user_id\", jsonData.userId);",
+									"    }",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"username\": \"testuser\",\n  \"password\": \"password123\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://localhost:8081/login",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8081",
+							"path": [
+								"login"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Second User Login",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Login successful\", function () {",
+									"    pm.response.to.have.status(200);",
+									"    pm.expect(pm.response.json()).to.have.property(\"token\");",
+									"    pm.expect(pm.response.json()).to.have.property(\"userId\");",
+									"});",
+									"",
+									"// Save bidder token",
+									"pm.test(\"Save bidder JWT token\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    if (jsonData.token) {",
+									"        pm.collectionVariables.set(\"bidder_token\", jsonData.token);",
+									"        pm.collectionVariables.set(\"bidder_id\", jsonData.userId);",
+									"    }",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"username\": \"testuser2\",\n  \"password\": \"password123\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://localhost:8081/login",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8081",
+							"path": [
+								"login"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Invalid Login (Error Testing)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Invalid credentials rejected\", function () {",
+									"    pm.response.to.have.status(400);",
+									"});",
+									"",
+									"pm.test(\"Error message returned\", function () {",
+									"    pm.expect(pm.response.json()).to.have.property(\"message\");",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"username\": \"testuser\",\n  \"password\": \"wrongpassword\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://localhost:8081/login",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8081",
+							"path": [
+								"login"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "02 - Item Service (Catalogue & Seller)",
+			"item": [
+				{
+					"name": "Seller Item Upload (UC7)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Item created successfully\", function () {",
+									"    pm.response.to.have.status(200);",
+									"    pm.expect(pm.response.json()).to.have.property(\"itemId\");",
+									"    pm.collectionVariables.set(\"item_id\", pm.response.json().itemId);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"name\": \"Vintage Camera\",\n  \"description\": \"Classic 35mm film camera in excellent condition\",\n  \"startingPrice\": 250.00,\n  \"sellerId\": 1,\n  \"category\": \"Electronics\",\n  \"auctionDuration\": 7\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://localhost:8082/items",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8082",
+							"path": [
+								"items"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Search Items (UC2.1)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Search returns results\", function () {",
+									"    pm.response.to.have.status(200);",
+									"    pm.expect(pm.response.json()).to.be.an('array');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "http://localhost:8082/items/search?query=camera",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8082",
+							"path": [
+								"items",
+								"search"
+							],
+							"query": [
+								{
+									"key": "query",
+									"value": "camera"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get All Items (UC2.2)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Items list returned\", function () {",
+									"    pm.response.to.have.status(200);",
+									"    pm.expect(pm.response.json()).to.be.an('array');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "http://localhost:8082/items",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8082",
+							"path": [
+								"items"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "03 - Auction Service (Bidding)",
+			"item": [
+				{
+					"name": "Create Auction",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Auction created successfully\", function () {",
+									"    pm.response.to.have.status(200);",
+									"    pm.expect(pm.response.json()).to.have.property(\"message\");",
+									"    pm.collectionVariables.set(\"auction_id\", 1);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"itemId\": 1,\n  \"startingPrice\": 250.00,\n  \"duration\": 7\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://localhost:8083/auctions",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8083",
+							"path": [
+								"auctions"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Place Valid Bid (UC3)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Bid placed successfully\", function () {",
+									"    pm.response.to.have.status(200);",
+									"    pm.expect(pm.response.json()).to.have.property(\"newHighestBid\");",
+									"    pm.expect(pm.response.json()).to.have.property(\"newHighestBidder\");",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"bidderId\": 2,\n  \"amount\": 275.00\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://localhost:8083/auctions/1/bid",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8083",
+							"path": [
+								"auctions",
+								"1",
+								"bid"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Invalid Bid (Lower Amount)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Lower bid rejected\", function () {",
+									"    pm.response.to.have.status(400);",
+									"    pm.expect(pm.response.json()).to.have.property(\"message\");",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"bidderId\": 2,\n  \"amount\": 200.00\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://localhost:8083/auctions/1/bid",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8083",
+							"path": [
+								"auctions",
+								"1",
+								"bid"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "04 - Payment Service (Transactions)",
+			"item": [
+				{
+					"name": "Process Payment (UC5)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Payment processed successfully\", function () {",
+									"    pm.response.to.have.status(200);",
+									"    pm.expect(pm.response.json()).to.have.property(\"paymentId\");",
+									"    pm.expect(pm.response.json()).to.have.property(\"transactionId\");",
+									"    pm.collectionVariables.set(\"payment_id\", pm.response.json().paymentId);",
+									"});",
+									"",
+									"pm.test(\"Payment amount is correct\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.totalAmount).to.equal(275.00);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"itemId\": 1,\n  \"userId\": 2,\n  \"totalAmount\": 275.00,\n  \"shippingType\": \"standard\",\n  \"paymentDetails\": {\n    \"cardNumber\": \"4242424242424242\",\n    \"expiryDate\": \"12/26\",\n    \"cvv\": \"123\",\n    \"cardholderName\": \"Jane Smith\"\n  }\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://localhost:8084/process",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8084",
+							"path": [
+								"process"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Receipt (UC6)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Receipt generated successfully\", function () {",
+									"    pm.response.to.have.status(200);",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property(\"id\");",
+									"    pm.expect(jsonData).to.have.property(\"transactionId\");",
+									"    pm.expect(jsonData).to.have.property(\"totalAmount\");",
+									"    pm.expect(jsonData).to.have.property(\"shippingAddress\");",
+									"    pm.expect(jsonData).to.have.property(\"item\");",
+									"    pm.expect(jsonData).to.have.property(\"user\");",
+									"});",
+									"",
+									"pm.test(\"Receipt contains correct amounts\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.totalAmount).to.equal(275.00);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "http://localhost:8084/{{payment_id}}/receipt",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8084",
+							"path": [
+								"{{payment_id}}",
+								"receipt"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "05 - Blockchain Service (UC8 Advanced)",
+			"item": [
+				{
+					"name": "Deploy Smart Contract (UC8)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Smart contract deployed\", function () {",
+									"    pm.response.to.have.status(200);",
+									"    pm.expect(pm.response.json()).to.have.property(\"contractAddress\");",
+									"    pm.expect(pm.response.json()).to.have.property(\"transactionHash\");",
+									"    pm.collectionVariables.set(\"contract_address\", pm.response.json().contractAddress);",
+									"});",
+									"",
+									"pm.test(\"Contract data valid\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.itemId).to.exist;",
+									"    pm.expect(jsonData.explorerUrl).to.include('blockbid-explorer.com');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"itemId\": 1,\n  \"sellerId\": 1,\n  \"startingPrice\": 250.00,\n  \"endTime\": \"2025-12-25T18:00:00\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://localhost:8085/contracts/deploy",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8085",
+							"path": [
+								"contracts",
+								"deploy"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Record Bid on Blockchain (UC8)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Bid recorded on blockchain\", function () {",
+									"    pm.response.to.have.status(200);",
+									"    pm.expect(pm.response.json()).to.have.property(\"transactionHash\");",
+									"    pm.expect(pm.response.json()).to.have.property(\"blockchainVerified\");",
+									"    pm.expect(pm.response.json().blockchainVerified).to.be.true;",
+									"});",
+									"",
+									"pm.test(\"Transaction details correct\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.itemId).to.equal(1);",
+									"    pm.expect(jsonData.bidAmount).to.equal(275.00);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"itemId\": 1,\n  \"bidderId\": 2,\n  \"bidAmount\": 275.00\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://localhost:8085/transactions/bid",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8085",
+							"path": [
+								"transactions",
+								"bid"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Auction History (UC8 - Transparency)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Auction history retrieved\", function () {",
+									"    pm.response.to.have.status(200);",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property(\"transactions\");",
+									"    pm.expect(jsonData.transactions).to.be.an('array');",
+									"    pm.expect(jsonData.blockchainVerified).to.be.true;",
+									"});",
+									"",
+									"pm.test(\"History contains bid records\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.totalTransactions).to.be.greaterThan(0);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "http://localhost:8085/auctions/1/history",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8085",
+							"path": [
+								"auctions",
+								"1",
+								"history"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Verify Transaction (UC8)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Transaction verified\", function () {",
+									"    pm.response.to.have.status(200);",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property(\"verified\");",
+									"    pm.expect(jsonData).to.have.property(\"blockHash\");",
+									"    pm.expect(jsonData).to.have.property(\"blockNumber\");",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "http://localhost:8085/transactions/{{transaction_hash}}/verify",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8085",
+							"path": [
+								"transactions",
+								"{{transaction_hash}}",
+								"verify"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Blockchain Stats (UC8)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Blockchain stats retrieved\", function () {",
+									"    pm.response.to.have.status(200);",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property(\"totalTransactions\");",
+									"    pm.expect(jsonData).to.have.property(\"totalContracts\");",
+									"    pm.expect(jsonData).to.have.property(\"bidTransactions\");",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "http://localhost:8085/stats",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8085",
+							"path": [
+								"stats"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "06 - Health Checks & System Status",
+			"item": [
+				{
+					"name": "User Service Health",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Service is healthy\", function () {",
+									"    pm.response.to.have.status(200);",
+									"    pm.expect(pm.response.json().status).to.equal('UP');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "http://localhost:8081/health",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8081",
+							"path": [
+								"health"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Item Service Health",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Service is healthy\", function () {",
+									"    pm.response.to.have.status(200);",
+									"    pm.expect(pm.response.json().status).to.equal('UP');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "http://localhost:8082/health",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8082",
+							"path": [
+								"health"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Auction Service Health",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Service is healthy\", function () {",
+									"    pm.response.to.have.status(200);",
+									"    pm.expect(pm.response.json().status).to.equal('UP');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "http://localhost:8083/health",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8083",
+							"path": [
+								"health"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Payment Service Health",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Service is healthy\", function () {",
+									"    pm.response.to.have.status(200);",
+									"    pm.expect(pm.response.json().status).to.equal('UP');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "http://localhost:8084/health",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8084",
+							"path": [
+								"health"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Blockchain Service Health",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Service is healthy\", function () {",
+									"    pm.response.to.have.status(200);",
+									"    pm.expect(pm.response.json().status).to.equal('UP');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "http://localhost:8085/health",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8085",
+							"path": [
+								"health"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "API Gateway Health",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Gateway is healthy\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "http://localhost:8080/health",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8080",
+							"path": [
+								"health"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "07 - Complete Auction Workflow",
+			"item": [
+				{
+					"name": "1. Seller Registration",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Seller registered\", function () {",
+									"    pm.response.to.have.status(200);",
+									"    pm.collectionVariables.set(\"w_user_id\", pm.response.json().userId);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"username\": \"seller1\",\n  \"password\": \"password123\",\n  \"firstName\": \"Alice\",\n  \"lastName\": \"Seller\",\n  \"email\": \"alice@example.com\",\n  \"streetNumber\": \"789\",\n  \"streetName\": \"Commerce Drive\",\n  \"city\": \"Toronto\",\n  \"province\": \"ON\",\n  \"postalCode\": \"M6K2M5\",\n  \"country\": \"Canada\"\n}"
+						},
+						"url": {
+							"raw": "http://localhost:8081/signup",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8081",
+							"path": [
+								"signup"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "2. Bidder Registration",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Bidder registered\", function () {",
+									"    pm.response.to.have.status(200);",
+									"    pm.collectionVariables.set(\"w_bidder_id\", pm.response.json().userId);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"username\": \"bidder1\",\n  \"password\": \"password123\",\n  \"firstName\": \"Bob\",\n  \"lastName\": \"Bidder\",\n  \"email\": \"bob@example.com\",\n  \"streetNumber\": \"321\",\n  \"streetName\": \"Auction Lane\",\n  \"city\": \"Mississauga\",\n  \"province\": \"ON\",\n  \"postalCode\": \"L5B3K7\",\n  \"country\": \"Canada\"\n}"
+						},
+						"url": {
+							"raw": "http://localhost:8081/signup",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8081",
+							"path": [
+								"signup"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "3. Seller Login",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Seller login successful\", function () {",
+									"    pm.response.to.have.status(200);",
+									"    pm.collectionVariables.set(\"w_jwt_token\", pm.response.json().token);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"username\": \"seller1\",\n  \"password\": \"password123\"\n}"
+						},
+						"url": {
+							"raw": "http://localhost:8081/login",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8081",
+							"path": [
+								"login"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "4. Item Upload (UC7)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Item uploaded\", function () {",
+									"    pm.response.to.have.status(200);",
+									"    pm.collectionVariables.set(\"w_item_id\", pm.response.json().itemId);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"name\": \"Rare Collectible Watch\",\n  \"description\": \"Limited edition timepiece from 1960s\",\n  \"startingPrice\": 500.00,\n  \"sellerId\": \"{{w_user_id}}\",\n  \"category\": \"Collectibles\",\n  \"auctionDuration\": 7\n}"
+						},
+						"url": {
+							"raw": "http://localhost:8082/items",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8082",
+							"path": [
+								"items"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "5. Deploy Blockchain Contract (UC8)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Contract deployed\", function () {",
+									"    pm.response.to.have.status(200);",
+									"    pm.expect(pm.response.json()).to.have.property(\"contractAddress\");",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"itemId\": \"{{w_item_id}}\",\n  \"sellerId\": \"{{w_user_id}}\",\n  \"startingPrice\": 500.00,\n  \"endTime\": \"2025-12-25T18:00:00\"\n}"
+						},
+						"url": {
+							"raw": "http://localhost:8085/contracts/deploy",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8085",
+							"path": [
+								"contracts",
+								"deploy"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "6. Create Auction",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Auction created\", function () {",
+									"    pm.response.to.have.status(200);",
+									"    pm.collectionVariables.set(\"w_auction_id\", pm.response.json().auctionId || pm.collectionVariables.get(\"w_item_id\"));",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"itemId\": \"{{w_item_id}}\",\n  \"startingPrice\": 500.00,\n  \"duration\": 7\n}"
+						},
+						"url": {
+							"raw": "http://localhost:8083/auctions",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8083",
+							"path": [
+								"auctions"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "7. Bidder Login",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Bidder login successful\", function () {",
+									"    pm.response.to.have.status(200);",
+									"    pm.collectionVariables.set(\"w_bidder_token\", pm.response.json().token);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"username\": \"bidder1\",\n  \"password\": \"password123\"\n}"
+						},
+						"url": {
+							"raw": "http://localhost:8081/login",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8081",
+							"path": [
+								"login"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "8. Place First Bid (UC3)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"First bid placed\", function () {",
+									"    pm.response.to.have.status(200);",
+									"    pm.expect(pm.response.json().newHighestBid).to.equal(550.00);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"bidderId\": \"{{w_bidder_id}}\",\n  \"amount\": 550.00\n}"
+						},
+						"url": {
+							"raw": "http://localhost:8083/auctions/{{w_item_id}}/bid",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8083",
+							"path": [
+								"auctions",
+								"{{w_item_id}}",
+								"bid"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "9. Record Bid on Blockchain (UC8)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Bid recorded on blockchain\", function () {",
+									"    pm.response.to.have.status(200);",
+									"    pm.expect(pm.response.json()).to.have.property(\"transactionHash\");",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"itemId\": \"{{w_item_id}}\",\n  \"bidderId\": \"{{w_bidder_id}}\",\n  \"bidAmount\": 550.00\n}"
+						},
+						"url": {
+							"raw": "http://localhost:8085/transactions/bid",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8085",
+							"path": [
+								"transactions",
+								"bid"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "10. Place Higher Bid",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Higher bid placed\", function () {",
+									"    pm.response.to.have.status(200);",
+									"    pm.expect(pm.response.json().newHighestBid).to.equal(600.00);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"bidderId\": \"{{w_bidder_id}}\",\n  \"amount\": 600.00\n}"
+						},
+						"url": {
+							"raw": "http://localhost:8083/auctions/{{w_item_id}}/bid",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8083",
+							"path": [
+								"auctions",
+								"{{w_item_id}}",
+								"bid"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "11. End Auction (UC4)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Auction ended\", function () {",
+									"    pm.response.to.have.status(200);",
+									"    pm.expect(pm.response.json()).to.have.property(\"winnerId\");",
+									"    pm.expect(pm.response.json().finalPrice).to.equal(600.00);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "PUT",
+						"header": [],
+						"url": {
+							"raw": "http://localhost:8083/auctions/{{w_item_id}}/end",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8083",
+							"path": [
+								"auctions",
+								"{{w_item_id}}",
+								"end"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "12. Process Payment (UC5)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Payment processed\", function () {",
+									"    pm.response.to.have.status(200);",
+									"    pm.expect(pm.response.json()).to.have.property(\"paymentId\");",
+									"    pm.collectionVariables.set(\"w_payment_id\", pm.response.json().paymentId);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"itemId\": \"{{w_item_id}}\",\n  \"userId\": \"{{w_bidder_id}}\",\n  \"totalAmount\": 600.00,\n  \"shippingType\": \"standard\",\n  \"paymentDetails\": {\n    \"cardNumber\": \"4111111111111111\",\n    \"expiryDate\": \"12/26\",\n    \"cvv\": \"123\",\n    \"cardholderName\": \"Bob Bidder\"\n  }\n}"
+						},
+						"url": {
+							"raw": "http://localhost:8084/process",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8084",
+							"path": [
+								"process"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "13. Generate Receipt (UC6)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Receipt generated\", function () {",
+									"    pm.response.to.have.status(200);",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property(\"id\");",
+									"    pm.expect(jsonData).to.have.property(\"transactionId\");",
+									"    pm.expect(jsonData).to.have.property(\"shippingAddress\");",
+									"    pm.expect(jsonData).to.have.property(\"item\");",
+									"    pm.expect(jsonData).to.have.property(\"user\");",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "http://localhost:8084/{{w_payment_id}}/receipt",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8084",
+							"path": [
+								"{{w_payment_id}}",
+								"receipt"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "14. Verify Blockchain History (UC8)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Complete blockchain audit trail\", function () {",
+									"    pm.response.to.have.status(200);",
+									"    var jsonData = pm.response.json();",
+									"    pm.expect(jsonData.transactions).to.be.an('array');",
+									"    pm.expect(jsonData.transactions.length).to.be.greaterThan(0);",
+									"    pm.expect(jsonData.blockchainVerified).to.be.true;",
+									"});",
+									"",
+									"pm.test(\"Blockchain provides immutable proof\", function () {",
+									"    var transactions = pm.response.json().transactions;",
+									"    const bidTransaction = transactions.find(tx => tx.transactionType === 'BID');",
+									"    pm.expect(bidTransaction).to.exist;",
+									"    pm.expect(bidTransaction).to.have.property('blockHash');",
+									"    pm.expect(bidTransaction).to.have.property('transactionHash');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "http://localhost:8085/auctions/{{w_item_id}}/history",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8085",
+							"path": [
+								"auctions",
+								"{{w_item_id}}",
+								"history"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		}
+	],
+	"variable": [
+		{
+			"key": "jwt_token",
+			"value": ""
+		},
+		{
+			"key": "user_id",
+			"value": ""
+		},
+		{
+			"key": "auction_id",
+			"value": ""
+		},
+		{
+			"key": "item_id",
+			"value": ""
+		},
+		{
+			"key": "payment_id",
+			"value": ""
+		},
+		{
+			"key": "bidder_id",
+			"value": ""
+		},
+		{
+			"key": "bidder_token",
+			"value": ""
+		},
+		{
+			"key": "w_user_id",
+			"value": ""
+		},
+		{
+			"key": "w_bidder_id",
+			"value": ""
+		},
+		{
+			"key": "w_jwt_token",
+			"value": ""
+		},
+		{
+			"key": "w_item_id",
+			"value": ""
+		},
+		{
+			"key": "contract_address",
+			"value": ""
+		},
+		{
+			"key": "w_auction_id",
+			"value": ""
+		},
+		{
+			"key": "w_bidder_token",
+			"value": ""
+		},
+		{
+			"key": "w_payment_id",
+			"value": ""
+		},
+		{
+			"key": "transaction_hash",
+			"value": ""
+		}
+	]
+}
