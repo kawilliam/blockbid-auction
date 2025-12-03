@@ -1,223 +1,420 @@
-# BlockBid Auction System - Backend API
+# BlockBid Auction System - Full Stack Microservices
 
 EECS 4413 - Building e-Commerce Systems  
-Deliverable 2 - Backend Implementation  
+Deliverable 3 - Full System Implementation  
 Students: Kyle Williamson
 
 ## Project Description
 
-BlockBid is a forward auction e-commerce system where sellers can list items for auction and buyers can place bids. The system implements all core auction functionality including user management, item cataloging, real-time bidding, auction completion, and payment processing.
+BlockBid is a microservices-based forward auction e-commerce platform where sellers list items and buyers place real-time bids. The system features a complete frontend interface, five independent microservices (User, Item, Auction, Payment, Blockchain), an API Gateway, and blockchain integration for auction transparency.
 
 ## Technology Stack
 
-- **Backend Framework:** Java Spring Boot 3.2.0
-- **Database:** H2 (in-memory) for development
-- **Build Tool:** Maven
-- **API Style:** RESTful with HATEOAS
-- **Testing:** Postman
+**Backend:**
+- Java Spring Boot 3.2.0 (5 microservices + API Gateway)
+- H2 Database (per-service pattern)
+- JWT Authentication (Spring Security)
+- WebSocket (real-time bidding updates)
+- RestTemplate (inter-service communication)
 
-**Note:** The original design document (Deliverable 1) proposed Node.js/Express. We changed to Java/Spring Boot for this implementation due to team expertise and development efficiency. The architecture and use cases remain unchanged.
+**Frontend:**
+- Vanilla JavaScript (ES6+)
+- HTML5/CSS3 (Yeezy-inspired dark theme)
+- WebSocket client for real-time updates
+
+**Blockchain (UC8 - Distinguishable Feature):**
+- Ethereum blockchain integration
+- Smart contracts for auction verification
+- Immutable auction records
+
+**DevOps:**
+- Docker & Docker Compose
+- Maven (build automation)
+- Postman (API testing)
 
 ## Prerequisites
 
-- Java 17 or higher
-- Maven 3.6+
-- Postman (for testing)
-- Git
+- Docker and Docker Compose
+- Java 17+ (if running without Docker)
+- Maven 3.6+ (if building from source)
+- Postman (for API testing)
+- Modern web browser
 
-## Installation Instructions
+## Architecture
 
-### 1. Clone the Repository
+BlockBid uses a microservices architecture with the following components:
+
+1. **API Gateway (Port 8080)** - Single entry point, request routing
+2. **User Service (Port 8081)** - Authentication, JWT tokens
+3. **Item Service (Port 8082)** - Catalogue management
+4. **Auction Service (Port 8083)** - Bidding logic, WebSocket updates
+5. **Payment Service (Port 8084)** - Transaction processing
+6. **Blockchain Service (Port 8085)** - Auction verification (UC8)
+
+## Installation & Deployment
+
+### Option 1: Docker Deployment (Recommended)
+
+1. **Clone the Repository**
 ```bash
 git clone https://github.com/kawilliam/blockbid-auction.git
 cd blockbid-auction
 ```
 
-### 2. Build the Project
+2. **Build and Run with Docker Compose**
 ```bash
-mvn clean install
+docker-compose up --build
 ```
 
-### 3. Run the Application
+This will:
+- Build all 6 microservices as Docker containers
+- Start all services with proper networking
+- Expose API Gateway on port 8080
+- Serve frontend on http://localhost:8080
+
+3. **Access the Application**
+- Frontend: http://localhost:8080
+- API Gateway: http://localhost:8080/api/*
+- Individual services available on ports 8081-8085
+
+4. **Stop Services**
 ```bash
+docker-compose down
+```
+
+### Option 2: Manual Deployment (Development)
+
+Run each service separately:
+
+```bash
+# Terminal 1 - API Gateway
+cd api-gateway
+mvn spring-boot:run
+
+# Terminal 2 - User Service
+cd user-service
+mvn spring-boot:run
+
+# Terminal 3 - Item Service
+cd item-service
+mvn spring-boot:run
+
+# Terminal 4 - Auction Service
+cd auction-service
+mvn spring-boot:run
+
+# Terminal 5 - Payment Service
+cd payment-service
+mvn spring-boot:run
+
+# Terminal 6 - Blockchain Service
+cd blockchain-service
 mvn spring-boot:run
 ```
 
-The application will start on `http://localhost:8080`
+Then open `frontend/index.html` in a browser.
 
-You should see:
-```
-==========================================
-BlockBid Auction System Started Successfully!
-Access at: http://localhost:8080
-H2 Console: http://localhost:8080/h2-console
-==========================================
-```
+## Using the Application
 
-### 4. (Optional) Load Sample Data
+### Frontend Interface
 
-For easier testing, you can load pre-populated sample data:
+1. **Login/Signup** (index.html)
+   - Register new account or login with existing credentials
+   - JWT token stored in localStorage
 
-**Option A: Using H2 Console**
-1. Start the application
-2. Go to `http://localhost:8080/h2-console`
-3. Login with:
-   - JDBC URL: `jdbc:h2:mem:blockbiddb`
-   - Username: `sa`
-   - Password: (leave blank)
-4. Copy and paste the contents of `sample_data.sql` and execute
+2. **Catalogue** (catalogue.html)
+   - Browse all active auctions
+   - Search by keyword
+   - View item details
 
-**Sample Data Includes:**
-- 3 Users: seller1, buyer1, buyer2 (all passwords: `pass123`)
-- 4 Active auction items
-- 8 bids across different items
-- Items at various stages (no bids, active bidding)
+3. **Bidding** (bidding.html)
+   - Real-time bid updates via WebSocket
+   - Place bids with validation
+   - View current highest bidder
 
-**Quick Test Scenario:**
-1. Login as `buyer1` (password: `pass123`)
-2. Browse items: `GET /api/items`
-3. Place bid on Item 3 (has no bids): `POST /api/auctions/items/3/bid?bidderId=2&amount=350`
-4. End auction: `POST /api/auctions/items/3/end`
-5. Process payment: `POST /api/payments/items/3?userId=2`
+4. **My Bids** (my-bids.html)
+   - Track your active bids
+   - See auction status
+
+5. **My Listings** (my-listings.html)
+   - View your auction items
+   - End auctions manually
+
+6. **Payment** (payment.html)
+   - Process winning bids
+   - Calculate shipping costs
+
+7. **Receipt** (receipt.html)
+   - View payment confirmation
+   - Blockchain verification link
+
+### Test Users
+- **seller1** / pass123 (has listings)
+- **buyer1** / pass123
+- **buyer2** / pass123
 
 ## Testing the API
 
-### Option 1: Using Postman Collection (Recommended)
+### Option 1: Postman Collection (Comprehensive)
 
-1. Import `BlockBid_Postman_Collection.json` into Postman
-2. Run the collection in order (tests are numbered TC001-TC016)
-3. Note: The database resets on each application restart
+Import `Blockbid_Microservices_API_Tests_CORRECTED.json` into Postman:
+- 50+ test cases covering all microservices
+- Positive and negative scenarios
+- Security testing (unauthorized access)
+- Scalability testing (concurrent operations)
 
-### Option 2: Manual Testing with curl
+### Option 2: Frontend Testing
 
-See the test cases section below for curl examples.
+Use the web interface to test complete user flows:
+1. Sign up as new user
+2. Browse catalogue
+3. Place bids on items
+4. Monitor real-time updates
+5. Complete payment after winning
 
 ## Implemented Use Cases
 
 ### UC1.1 - User Sign-Up
-- Endpoint: `POST /api/users/signup`
-- Creates new user with validation
-- Returns user data with HATEOAS links
+- **Service:** User Service
+- **Frontend:** index.html signup form
+- **API:** `POST /api/users/signup`
+- Validates username/email uniqueness, password strength
 
-### UC1.2 - User Login  
-- Endpoint: `POST /api/users/login`
-- Authenticates user credentials
-- Returns user data with next actions
+### UC1.2 - User Login
+- **Service:** User Service  
+- **Frontend:** index.html login form
+- **API:** `POST /api/users/login`
+- Returns JWT token for authentication
 
 ### UC2.1 - Browse Catalogue
-- Endpoint: `GET /api/items`
-- Returns all active auction items
+- **Service:** Item Service
+- **Frontend:** catalogue.html
+- **API:** `GET /api/items`
+- Displays all active auctions with current prices
 
 ### UC2.2 - Search Items
-- Endpoint: `GET /api/items/search?keyword={keyword}`
-- Searches items by title and description
+- **Service:** Item Service
+- **Frontend:** catalogue.html search bar
+- **API:** `GET /api/items/search?keyword={keyword}`
+- Searches by title and description
 
 ### UC7 - Seller Upload Item
-- Endpoint: `POST /api/items?sellerId={id}`
-- Creates new auction item
-- Automatically sets to ACTIVE status
+- **Service:** Item Service
+- **Frontend:** seller.html
+- **API:** `POST /api/items?sellerId={id}`
+- Creates new auction with starting price, description
 
 ### UC3 - Bidding
-- Endpoint: `POST /api/auctions/items/{id}/bid?bidderId={id}&amount={amount}`
-- Places bid with validation
-- Updates item current price
-- Tracks bid history
+- **Service:** Auction Service
+- **Frontend:** bidding.html with WebSocket
+- **API:** `POST /api/auctions/items/{id}/bid`
+- Real-time bid updates to all connected clients
+- Validation: bid must exceed current price
 
 ### UC4 - Auction End
-- Endpoint: `POST /api/auctions/items/{id}/end`
-- Ends auction and determines winner
-- Changes status to ENDED
+- **Service:** Auction Service
+- **Frontend:** my-listings.html
+- **API:** `POST /api/auctions/items/{id}/end`
+- Determines winner, updates item status
 
 ### UC5 - Payment
-- Endpoint: `POST /api/payments/items/{id}?userId={id}`
-- Processes payment (winner only)
-- Calculates total with shipping
+- **Service:** Payment Service
+- **Frontend:** payment.html
+- **API:** `POST /api/payments/items/{id}`
+- Processes payment with shipping calculation
+- Winner-only validation
 
 ### UC6 - Receipt
-- Included in payment response
-- Shows itemPrice, shippingCost, total
+- **Frontend:** receipt.html
+- Shows itemized payment details
+- Includes blockchain verification link
 
-## Test Cases Coverage
+### UC8 - Blockchain Integration (Distinguishable Feature)
+- **Service:** Blockchain Service
+- **Technology:** Ethereum smart contracts
+- **Features:**
+  - Record auction completion on blockchain
+  - Generate immutable transaction records
+  - Provide blockchain explorer links
+  - Verify auction integrity
+- **API:** `POST /api/blockchain/record-auction`
 
-The Postman collection includes 16 comprehensive test cases:
+## Microservices API Endpoints
 
-- **TC001-TC004:** User Management (signup, login, validation)
-- **TC005-TC006:** Browse and Search
-- **TC007-TC008:** Item Upload
-- **TC009-TC012:** Bidding (successful, validation, history)
-- **TC013-TC014:** Auction End
-- **TC015-TC016:** Payment (winner/non-winner)
-
-## API Endpoints Summary
-
+### User Service (Port 8081)
 | Method | Endpoint | Description |
 |--------|----------|-------------|
-| POST | /api/users/signup | User registration |
-| POST | /api/users/login | User authentication |
-| GET | /api/items | Browse all items |
-| GET | /api/items/search | Search items |
-| POST | /api/items | Create auction item |
+| POST | /api/users/signup | Register new user |
+| POST | /api/users/login | Authenticate user (JWT) |
+| GET | /api/users/{id} | Get user details |
+
+### Item Service (Port 8082)
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | /api/items | List all active items |
+| GET | /api/items/search | Search items by keyword |
+| POST | /api/items | Create new auction item |
+| GET | /api/items/{id} | Get item details |
+| PUT | /api/items/{id}/price | Update item price |
+
+### Auction Service (Port 8083)
+| Method | Endpoint | Description |
+|--------|----------|-------------|
 | POST | /api/auctions/items/{id}/bid | Place bid |
 | GET | /api/auctions/items/{id}/bids | Get bid history |
 | POST | /api/auctions/items/{id}/end | End auction |
+| WebSocket | /ws/auction/{itemId} | Real-time bid updates |
+
+### Payment Service (Port 8084)
+| Method | Endpoint | Description |
+|--------|----------|-------------|
 | POST | /api/payments/items/{id} | Process payment |
+| GET | /api/payments/orders/{id} | Get order details |
 
-## Database
+### Blockchain Service (Port 8085)
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| POST | /api/blockchain/record-auction | Record on blockchain |
+| GET | /api/blockchain/verify/{txHash} | Verify transaction |
 
-The application uses H2 in-memory database which:
-- Automatically creates schema on startup
-- Resets on each application restart
-- Can be accessed at: `http://localhost:8080/h2-console`
-  - JDBC URL: `jdbc:h2:mem:blockbiddb`
-  - Username: `sa`
-  - Password: (leave blank)
+## Test Coverage
+
+The Postman collection includes comprehensive testing:
+
+**Functional Tests:**
+- User registration and authentication
+- Item CRUD operations
+- Bidding workflows
+- Payment processing
+- Blockchain recording
+
+**Security Tests:**
+- Unauthorized access attempts
+- JWT token validation
+- Input sanitization
+- SQL injection prevention
+
+**Robustness Tests:**
+- Invalid data handling
+- Edge cases (negative bids, duplicate users)
+- Concurrent bid scenarios
+- Service communication failures
+
+**Scalability Tests:**
+- Multiple simultaneous bids
+- Concurrent auction endings
+- High-volume item creation
+
+## Database Architecture
+
+Each microservice has its own H2 database instance following the database-per-service pattern:
+
+- **User Service DB:** User accounts, credentials
+- **Item Service DB:** Auction items, catalogue
+- **Auction Service DB:** Bids, auction history
+- **Payment Service DB:** Orders, transactions
+- **Blockchain Service DB:** Transaction records, smart contract metadata
+
+All databases are H2 in-memory and reset on service restart.
 
 ## Project Structure
+
 ```
-src/main/java/com/blockbid/
-├── BlockbidApplication.java          # Main entry point
-├── user/                              # UC1 - User Management
+blockbid-auction/
+├── docker-compose.yml              # Multi-service orchestration
+├── Dockerfile                      # Service containerization
+├── pom.xml                        # Maven parent
+│
+├── api-gateway/                   # Port 8080
+│   ├── ApiGatewayApplication.java
+│   ├── WebClientConfig.java
+│   └── WebSocketProxyConfig.java
+│
+├── user-service/                  # Port 8081
 │   ├── User.java
-│   ├── UserRepository.java
 │   ├── UserService.java
-│   └── UserController.java
-├── catalogue/                         # UC2, UC7 - Items
+│   └── SecurityConfig.java
+│
+├── item-service/                  # Port 8082
 │   ├── Item.java
-│   ├── ItemRepository.java
-│   ├── ItemService.java
-│   └── ItemController.java
-├── auction/                           # UC3, UC4 - Bidding
-│   ├── Bid.java
-│   ├── BidRepository.java
+│   └── ItemService.java
+│
+├── auction-service/               # Port 8083
+│   ├── Auction.java, Bid.java
 │   ├── AuctionService.java
-│   └── AuctionController.java
-└── payment/                           # UC5, UC6 - Payment
-    ├── Payment.java
-    ├── PaymentRepository.java
-    ├── PaymentService.java
-    └── PaymentController.java
+│   └── WebSocketConfig.java
+│
+├── payment-service/               # Port 8084
+│   ├── Payment.java, Order.java
+│   └── PaymentService.java
+│
+├── blockchain-service/            # Port 8085
+│   ├── BlockchainTransaction.java
+│   ├── SmartContract.java
+│   └── BlockchainUtils.java
+│
+└── frontend/                      # Static files
+    ├── index.html, catalogue.html
+    ├── bidding.html, my-bids.html
+    ├── payment.html, receipt.html
+    └── css/, js/
 ```
+
+## Key Features Implemented
+
+### Microservices Architecture
+- Independent deployable services
+- Database-per-service pattern
+- RESTful inter-service communication
+- Centralized API Gateway
+
+### Real-time Updates
+- WebSocket bidding notifications
+- Live price updates
+- Concurrent bid handling
+
+### Security
+- JWT-based authentication
+- Password hashing (BCrypt)
+- Input validation at service level
+- CORS configuration
+
+### Blockchain Integration (UC8)
+- Smart contracts Simulation
+- Immutable auction records
+- Transaction verification
+- Explorer integration
 
 ## Design Decisions
 
-### Technology Change: Node.js → Java/Spring Boot
-**Reason:** Team has stronger expertise in Java. Spring Boot provides excellent REST API support, built-in HATEOAS, and robust database integration.
+### Microservices vs Monolith
+- **Rationale:** Scalability, independent deployment, technology flexibility
+- **Implementation:** Each service has its own database and can scale independently
+- **Challenge:** Cross-service data consistency managed via API calls
 
-**What Changed:** Implementation language and framework  
-**What Stayed the Same:** Architecture (microservices-ready), use cases, database schema, REST API design
+### WebSocket for Bidding
+- **Rationale:** Real-time updates essential for auction dynamics
+- **Implementation:** Dedicated WebSocket endpoint in Auction Service
+- **Benefit:** Users see bids instantly without polling
 
-### Architecture
-- **Layered architecture:** Controller → Service → Repository
-- **Separation of concerns:** Each layer has single responsibility
-- **RESTful design:** Standard HTTP methods with HATEOAS links
-- **Transaction management:** @Transactional for data consistency
+### Blockchain as Distinguishable Feature
+- **Rationale:** Adds transparency and immutability to auctions
+- **Implementation:** Records auction completion Simulation
+- **Value:** External verification of auction results
 
-## Known Limitations
+## Known Considerations
 
-1. **Password Security:** Passwords stored as plain text (will add hashing in Deliverable 3)
-2. **Authentication:** No JWT tokens yet (planned for Deliverable 3)
-3. **Real-time Updates:** WebSocket for live bidding planned for Deliverable 3
-4. **Blockchain:** UC8 advanced feature deferred to Deliverable 3
+1. **Production Readiness:**
+   - Switch to persistent databases (PostgreSQL/MySQL)
+   - Implement service discovery (Eureka)
+   - Add monitoring/logging (ELK stack)
+   - Use production-grade blockchain network
+
+2. **Future Enhancements:**
+   - Email notifications
+   - Advanced search filters
+   - Auction scheduling
+   - Admin dashboard
 
 ## Git Repository
 
